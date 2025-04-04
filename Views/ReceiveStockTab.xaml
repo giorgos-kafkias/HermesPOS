@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="HermesPOS.Views.ReceiveStockTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <Grid Margin="10">
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="Σκανάρετε το προϊόν:" FontSize="16"/>
+            <TextBox Text="{Binding ScannedBarcode, UpdateSourceTrigger=PropertyChanged}" FontSize="16" Margin="0,5"/>
+
+            <ListView ItemsSource="{Binding ReceivedItems}" Height="200" Margin="0,10">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Προϊόν" DisplayMemberBinding="{Binding Product.Name}" Width="200"/>
+                        <GridViewColumn Header="Barcode" DisplayMemberBinding="{Binding Product.Barcode}" Width="120"/>
+                        <GridViewColumn Header="Ποσότητα">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="50"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <Button Content="Ολοκλήρωση Παραλαβής"
+                    Command="{Binding CompleteReceptionCommand}"
+                    FontSize="16" Height="40"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

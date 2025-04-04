@@ -1,0 +1,25 @@
+﻿<UserControl x:Class="HermesPOS.Views.LowStockProductsTab"
+			 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d">
+    <Grid Margin="10">
+        <StackPanel>
+            <Button Content="📤 Εξαγωγή σε Excel"
+					Command="{Binding ExportToExcelCommand}"
+					HorizontalAlignment="Right"
+					Margin="0,0,0,10" Width="180"/>
+
+            <DataGrid ItemsSource="{Binding LowStockProducts}" 
+					  AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Όνομα" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Απόθεμα" Binding="{Binding Stock}" Width="100"/>
+                    <DataGridTextColumn Header="Προμηθευτής" Binding="{Binding Supplier.Name}" Width="150"/>
+                    <DataGridTextColumn Header="Κατηγορία" Binding="{Binding Category.Name}" Width="150"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+    </Grid>
+</UserControl>

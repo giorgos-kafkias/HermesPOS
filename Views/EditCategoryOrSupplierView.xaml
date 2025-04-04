@@ -1,0 +1,34 @@
+﻿<Window x:Class="HermesPOS.Views.EditCategoryOrSupplierView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Επεξεργασία" Height="300" Width="400"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <StackPanel Margin="20">
+            <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+            <!-- 🔹 Πεδίο Όνοματος (Κοινό για Κατηγορίες & Προμηθευτές) -->
+            <TextBlock Text="Όνομα:"/>
+            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,15"/>
+
+            <!-- 🔹 Επιπλέον πεδία ΜΟΝΟ για Προμηθευτές -->
+            <StackPanel Visibility="{Binding IsSupplier, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="Τηλέφωνο:"/>
+                <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,5"/>
+
+                <TextBlock Text="Διεύθυνση:"/>
+                <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,15"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="💾 Αποθήκευση" Command="{Binding SaveCommand}" Width="100" Margin="5"/>
+                <Button Content="❌ Ακύρωση" Command="{Binding CancelCommand}" Width="100" Margin="5"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

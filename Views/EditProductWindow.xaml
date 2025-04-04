@@ -1,0 +1,33 @@
+﻿<Window x:Class="HermesPOS.Views.EditProductWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Επεξεργασία Προϊόντος" Height="400" Width="400">
+    <Grid>
+        <StackPanel Margin="20">
+            <TextBlock Text="Barcode:"/>
+            <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Όνομα Προϊόντος:"/>
+            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Τιμή:"/>
+            <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Απόθεμα:"/>
+            <TextBox Text="{Binding Stock, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <TextBlock Text="Κατηγορία:"/>
+            <ComboBox ItemsSource="{Binding Categories}" 
+                      SelectedItem="{Binding SelectedCategory}" 
+                      DisplayMemberPath="Name"/>
+
+            <TextBlock Text="Προμηθευτής:"/>
+            <ComboBox ItemsSource="{Binding Suppliers}" 
+                      SelectedItem="{Binding SelectedSupplier}" 
+                      DisplayMemberPath="Name"/>
+
+            <Button Content="Αποθήκευση" Command="{Binding SaveCommand}" Margin="5"/>
+            <Button Content="Ακύρωση" Command="{Binding CancelCommand}" Margin="5"/>
+        </StackPanel>
+    </Grid>
+</Window>

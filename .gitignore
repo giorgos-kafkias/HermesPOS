@@ -1,0 +1,14 @@
+bin/
+obj/
+.vscode/
+*.user
+*.suo
+*.csproj.user
+*.db
+*.DS_Store
+*.exe
+*.dll
+*.log
+*.pdb
+*.cache
+*.vs/

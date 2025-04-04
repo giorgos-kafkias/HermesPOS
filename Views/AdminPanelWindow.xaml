@@ -1,0 +1,230 @@
+﻿<Window x:Class="HermesPOS.Views.AdminPanelWindow"
+            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:converters="clr-namespace:HermesPOS.Converters"
+            xmlns:views="clr-namespace:HermesPOS.Views"
+            xmlns:sys="clr-namespace:System;assembly=mscorlib"
+            Title="Πίνακας Διαχειριστή"
+            Height="600" Width="800"
+            WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+
+        <!-- 🔹 Converter για σύνολο εσόδων -->
+        <converters:TotalAmountConverter x:Key="TotalAmountConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Πάνω για το κουμπί -->
+            <RowDefinition Height="*"/>
+            <!-- Κάτω για το υπόλοιπο περιεχόμενο -->
+        </Grid.RowDefinitions>
+        <!-- 🔹 Κουμπί Admin πάνω δεξιά -->
+        <StackPanel Grid.Row="0" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Margin="10">
+            <Button Content="Αποσύνδεση"
+                    Width="75"
+                    Height="18"
+                    Click="OpenAdminLogin_Click"/>
+        </StackPanel>
+        <TabControl   Grid.Row="1" SelectionChanged="TabControl_SelectionChanged">
+            <!-- 🔹 Καρτέλα Διαχείρισης Προϊόντων -->
+            <TabItem Header="📦 Προϊόντα">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <!-- Αναζήτηση -->
+                        <RowDefinition Height="*"/>
+                        <!-- Λίστα -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Κουμπιά -->
+                    </Grid.RowDefinitions>
+
+                    <!-- 🔍 Αναζήτηση -->
+                    <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
+                        <TextBlock Text="🔍 Αναζήτηση:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBox Width="300" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <!-- 🔹 Λίστα Προϊόντων -->
+                    <DataGrid x:Name="ProductsDataGrid"
+                  Grid.Row="1"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  ItemsSource="{Binding FilteredProducts}"
+                  SelectedItem="{Binding SelectedProduct, Mode=TwoWay}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="📌 Όνομα" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="💲 Τιμή (€)" Binding="{Binding Price}" Width="100"/>
+                            <DataGridTextColumn Header="📦 Απόθεμα" Binding="{Binding Stock}" Width="100"/>
+                            <DataGridTextColumn Header="🗂️ Κατηγορία" Binding="{Binding Category.Name}" Width="150"/>
+                            <DataGridTextColumn Header="🏭 Προμηθευτής" Binding="{Binding Supplier.Name}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 🔹 Κουμπιά -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
+                        <Button Content="➕ Προσθήκη" Command="{Binding AddProductCommand}" Width="150" Margin="5"/>
+                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditProductCommand}" Width="150" Margin="5"/>
+                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteProductCommand}" Width="150" Margin="5"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+
+            <!-- 🔹 Καρτέλα Διαχείρισης Κατηγοριών -->
+            <TabItem Header="🗂️ Κατηγορίες">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 🔹 Λίστα Κατηγοριών -->
+                    <DataGrid Grid.Row="1" 
+                                  ItemsSource="{Binding Categories}" 
+                                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                  AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="📌 Κατηγορία" Binding="{Binding Name}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 🔹 Κουμπιά -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                        <Button Content="➕ Προσθήκη" Command="{Binding AddCategoryCommand}" Width="150" Margin="5"/>
+                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditCategoryCommand}" Width="150" Margin="5"/>
+                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteCategoryCommand}" Width="150" Margin="5"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- 🔹 Καρτέλα Διαχείρισης Προμηθευτών -->
+            <TabItem Header="🏭 Προμηθευτές">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 🔹 Λίστα Προμηθευτών -->
+                    <DataGrid Grid.Row="1" 
+                      ItemsSource="{Binding Suppliers}" 
+                      SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                      AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="🏭 Προμηθευτής" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="📞 Τηλέφωνο" Binding="{Binding Phone}" Width="150"/>
+                            <DataGridTextColumn Header="📍 Διεύθυνση" Binding="{Binding Address}" Width="200"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 🔹 Κουμπιά -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                        <Button Content="➕ Προσθήκη" Command="{Binding AddSupplierCommand}" Width="150" Margin="5"/>
+                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditSupplierCommand}" Width="150" Margin="5"/>
+                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteSupplierCommand}" Width="150" Margin="5"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="🔥 Bestseller Προϊόντα">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 🔹 Φίλτρα αναζήτησης -->
+                    <WrapPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" ItemWidth="160">
+                        <TextBlock Text="Από: " VerticalAlignment="Center" />
+                        <DatePicker SelectedDate="{Binding BestsellerViewModel.FromDate, Mode=TwoWay}" Width="140"/>
+
+                        <TextBlock Text="Έως: " VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        <DatePicker SelectedDate="{Binding BestsellerViewModel.ToDate, Mode=TwoWay}" Width="140"/>
+
+                        <TextBlock Text="Κατηγορία: " VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        <ComboBox ItemsSource="{Binding BestsellerViewModel.Categories}" 
+                          SelectedItem="{Binding BestsellerViewModel.SelectedCategory, Mode=TwoWay}" 
+                          DisplayMemberPath="Name" Width="180"/>
+
+                        <TextBlock Text="Προμηθευτής: " VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        <ComboBox ItemsSource="{Binding BestsellerViewModel.Suppliers}" 
+                          SelectedItem="{Binding BestsellerViewModel.SelectedSupplier, Mode=TwoWay}" 
+                          DisplayMemberPath="Name" Width="180"/>
+
+                        <TextBlock Text="Top N: " VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        <ComboBox ItemsSource="{Binding BestsellerViewModel.TopNOptions}" 
+                                  SelectedItem="{Binding BestsellerViewModel.TopN, Mode=TwoWay}" 
+                                  Width="80"/>
+
+                        <Button Content="Φόρτωση" Command="{Binding BestsellerViewModel.LoadBestsellersCommand}" Width="120" Height="30" Margin="10,0,0,0"/>
+                    </WrapPanel>
+
+                    <!-- 🔹 Πίνακας Bestseller Προϊόντων -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding BestsellerViewModel.Bestsellers}" AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding ProductId}" Width="50"/>
+                            <DataGridTextColumn Header="Προϊόν" Binding="{Binding Product.Name}" Width="*"/>
+                            <DataGridTextColumn Header="Πωλήσεις" Binding="{Binding Quantity}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- 🔹 Καρτέλα Αναφορά Πωλήσεων -->
+            <TabItem Header="📈 Αναφορά Πωλήσεων">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 🔹 Φίλτρα -->
+                    <StackPanel Orientation="Horizontal" Margin="10" HorizontalAlignment="Center">
+                        <TextBlock Text="Από:" VerticalAlignment="Center" Margin="5"/>
+                        <DatePicker SelectedDate="{Binding SalesReportViewModel.FromDate}" Width="120"/>
+
+                        <TextBlock Text="Έως:" VerticalAlignment="Center" Margin="5"/>
+                        <DatePicker SelectedDate="{Binding SalesReportViewModel.ToDate}" Width="120"/>
+
+                        <Button Content="Φόρτωση" Command="{Binding SalesReportViewModel.LoadSalesCommand}" Margin="10,0,0,0" Width="100"/>
+                    </StackPanel>
+
+                    <!-- 🔹 Πίνακας Αποτελεσμάτων -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding SalesReportViewModel.SalesSummary}" AutoGenerateColumns="False" Margin="10" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ημερομηνία" Binding="{Binding Date}" Width="*"/>
+                            <DataGridTextColumn Header="Πωλήσεις" Binding="{Binding TotalSales}" Width="100"/>
+                            <DataGridTextColumn Header="Σύνολο Εσόδων (€)" Binding="{Binding TotalAmount, StringFormat=€0.00}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- 🔹 Σύνολο κάτω από τον πίνακα -->
+                    <TextBlock Grid.Row="2"
+                       Text="{Binding SalesReportViewModel.SalesSummary, Converter={StaticResource TotalAmountConverter}}"
+                       FontWeight="Bold" FontSize="14"
+                       HorizontalAlignment="Right" Margin="10"/>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="📉 Χαμηλό Απόθεμα">
+                <views:LowStockProductsTab DataContext="{Binding LowStockViewModel}" />
+            </TabItem>
+
+            <TabItem Header="📥 Παραλαβή Προϊόντων">
+                <views:ReceiveStockTab DataContext="{Binding ReceiveStockViewModel}" />
+            </TabItem>
+
+
+        </TabControl>
+    </Grid>
+
+</Window>
