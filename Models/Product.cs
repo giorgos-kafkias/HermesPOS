@@ -20,6 +20,7 @@ namespace HermesPOS.Models
 		[Column(TypeName = "decimal(18,2)")]
 		public decimal Price { get; set; } // Τιμή προϊόντος (υποχρεωτική, 2 δεκαδικά)
 
+		public decimal? WholesalePrice { get; set; } // Τιμή χονδρικής (null αν δεν έχει)
 		[Required]
 		public int Stock { get; set; } // Απόθεμα προϊόντος (υποχρεωτικό)
 
