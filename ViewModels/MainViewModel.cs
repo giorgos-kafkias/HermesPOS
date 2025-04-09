@@ -48,7 +48,25 @@ namespace HermesPOS.ViewModels
 			private int _quantity;
 			private decimal _price;
 			private readonly Action _onQuantityOrPriceChanged;
+			public bool HasWholesaleOption => Product.WholesalePrice.HasValue;
 
+			private bool _useWholesalePrice;
+			public bool UseWholesalePrice
+			{
+				get => _useWholesalePrice;
+				set
+				{
+					_useWholesalePrice = value;
+					OnPropertyChanged(nameof(UseWholesalePrice));
+					OnPropertyChanged(nameof(Price));       // Τιμή ανά μονάδα
+					OnPropertyChanged(nameof(TotalPrice));  // Σύνολο
+					_onQuantityOrPriceChanged?.Invoke();    // Ενημέρωση καλαθιού
+				}
+			}
+
+			// 🔹 Εμφάνιση χονδρικής τιμής σε μορφή string
+			public string WholesalePriceDisplay =>
+				Product.WholesalePrice.HasValue ? $"({Product.WholesalePrice.Value:0.00} €)" : string.Empty;
 			public int Quantity
 			{
 				get => _quantity;
@@ -76,23 +94,10 @@ namespace HermesPOS.ViewModels
 					}
 				}
 			}
-
-
-			public decimal Price
-			{
-				get => _price;
-				set
-				{
-					if (_price != value)
-					{
-						_price = value;
-						OnPropertyChanged(nameof(Price));
-						OnPropertyChanged(nameof(TotalPrice));
-						_onQuantityOrPriceChanged?.Invoke();
-					}
-				}
-			}
-
+			public decimal Price =>
+				UseWholesalePrice && Product.WholesalePrice.HasValue
+					? Product.WholesalePrice.Value
+					: Product.Price;
 			public decimal TotalPrice => Quantity * Price;
 
 			public CartItem(Product product, Action onQuantityOrPriceChanged)
