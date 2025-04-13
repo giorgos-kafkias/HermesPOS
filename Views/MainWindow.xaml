@@ -100,12 +100,11 @@
                     <GridView>
                         <GridViewColumn Header="Όνομα Προϊόντος" Width="250" DisplayMemberBinding="{Binding Product.Name}" />
 
-                        <!-- Τιμή ανά μονάδα -->
+                        <!-- Editable Τιμή -->
                         <GridViewColumn Header="Τιμή (€)" Width="100">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Price, Mode=OneWay}" IsReadOnly="True" Width="80" />
-
+                                    <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -116,12 +115,12 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
                                         <CheckBox IsChecked="{Binding UseWholesalePrice, Mode=TwoWay}"
-                          Visibility="{Binding HasWholesaleOption, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                  Visibility="{Binding HasWholesaleOption, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                         <TextBlock Text="{Binding WholesalePriceDisplay}"
-                           Margin="5,0,0,0"
-                           VerticalAlignment="Center"
-                           Foreground="Gray"
-                           FontSize="12"/>
+                                   Margin="5,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="Gray"
+                                   FontSize="12"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
@@ -152,6 +151,7 @@
                         </GridViewColumn>
                     </GridView>
                 </ListView.View>
+
 
             </ListView>
         </Border>

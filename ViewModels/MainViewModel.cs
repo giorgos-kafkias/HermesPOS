@@ -48,6 +48,7 @@ namespace HermesPOS.ViewModels
 			private int _quantity;
 			private decimal _price;
 			private readonly Action _onQuantityOrPriceChanged;
+
 			public bool HasWholesaleOption => Product.WholesalePrice.HasValue;
 
 			private bool _useWholesalePrice;
@@ -57,16 +58,21 @@ namespace HermesPOS.ViewModels
 				set
 				{
 					_useWholesalePrice = value;
+
+					// ➕ Αν έχει χονδρική τιμή, την εφαρμόζουμε
+					if (_useWholesalePrice && Product.WholesalePrice.HasValue)
+						Price = Product.WholesalePrice.Value;
+					else
+						Price = Product.Price;
+
 					OnPropertyChanged(nameof(UseWholesalePrice));
-					OnPropertyChanged(nameof(Price));       // Τιμή ανά μονάδα
-					OnPropertyChanged(nameof(TotalPrice));  // Σύνολο
-					_onQuantityOrPriceChanged?.Invoke();    // Ενημέρωση καλαθιού
 				}
 			}
 
-			// 🔹 Εμφάνιση χονδρικής τιμής σε μορφή string
+			// Εμφάνιση δίπλα στο checkbox
 			public string WholesalePriceDisplay =>
 				Product.WholesalePrice.HasValue ? $"({Product.WholesalePrice.Value:0.00} €)" : string.Empty;
+
 			public int Quantity
 			{
 				get => _quantity;
@@ -74,17 +80,15 @@ namespace HermesPOS.ViewModels
 				{
 					if (_quantity != value)
 					{
-						// 🔒 Περιορισμός: Δεν μπορεί να ξεπερνάει το stock
 						if (value > Product.Stock)
 						{
-							// Προαιρετικό: δείξε μήνυμα
 							System.Windows.MessageBox.Show(
 								$"Το απόθεμα για το προϊόν \"{Product.Name}\" είναι {Product.Stock}.",
 								"Μη διαθέσιμη ποσότητα",
 								System.Windows.MessageBoxButton.OK,
 								System.Windows.MessageBoxImage.Warning
 							);
-							return; // μπλοκάρει την αλλαγή
+							return;
 						}
 
 						_quantity = value;
@@ -94,17 +98,30 @@ namespace HermesPOS.ViewModels
 					}
 				}
 			}
-			public decimal Price =>
-				UseWholesalePrice && Product.WholesalePrice.HasValue
-					? Product.WholesalePrice.Value
-					: Product.Price;
+
+			// ✅ Editable τιμή από το textbox
+			public decimal Price
+			{
+				get => _price;
+				set
+				{
+					if (_price != value)
+					{
+						_price = value;
+						OnPropertyChanged(nameof(Price));
+						OnPropertyChanged(nameof(TotalPrice));
+						_onQuantityOrPriceChanged?.Invoke();
+					}
+				}
+			}
+
 			public decimal TotalPrice => Quantity * Price;
 
 			public CartItem(Product product, Action onQuantityOrPriceChanged)
 			{
 				Product = product;
 				_quantity = 1;
-				_price = product.Price;
+				_price = product.Price; // Ξεκινάμε με λιανική
 				_onQuantityOrPriceChanged = onQuantityOrPriceChanged;
 			}
 
@@ -112,6 +129,7 @@ namespace HermesPOS.ViewModels
 			protected void OnPropertyChanged(string propertyName) =>
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
+
 
 		public decimal TotalPrice
 		{
@@ -230,20 +248,6 @@ namespace HermesPOS.ViewModels
 			CartItems.Clear();
 			TotalPrice = 0;
 		}
-
-		//private void OpenLowStockView()
-		//{
-		//	var viewModel = _serviceProvider.GetRequiredService<LowStockProductsViewModel>();
-		//	var lowStockView = new LowStockProductsView(viewModel);
-		//	lowStockView.Show();
-		//}
-
-		//private void OpenReceiveStockView()
-		//{
-		//	var viewModel = _serviceProvider.GetRequiredService<ReceiveStockViewModel>();
-		//	var receiveStockView = new ReceiveStockView(viewModel);
-		//	receiveStockView.Show();
-		//}
 
 		public event PropertyChangedEventHandler PropertyChanged;
 		protected void OnPropertyChanged(string propertyName) =>
