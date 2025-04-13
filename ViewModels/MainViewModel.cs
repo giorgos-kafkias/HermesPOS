@@ -65,9 +65,13 @@ namespace HermesPOS.ViewModels
 					else
 						Price = Product.Price;
 
+					// ✅ Ενημερώνουμε και το TextBox
+					PriceString = Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
 					OnPropertyChanged(nameof(UseWholesalePrice));
 				}
 			}
+
 
 			// Εμφάνιση δίπλα στο checkbox
 			public string WholesalePriceDisplay =>
@@ -98,6 +102,28 @@ namespace HermesPOS.ViewModels
 					}
 				}
 			}
+			private string _priceString;
+			public string PriceString
+			{
+				get => _priceString;
+				set
+				{
+					if (_priceString != value)
+					{
+						_priceString = value;
+
+						// Επιτρέπουμε και τελεία και κόμμα
+						var clean = value?.Replace(',', '.') ?? "";
+
+						if (decimal.TryParse(clean, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+						{
+							Price = parsed;
+						}
+
+						OnPropertyChanged(nameof(PriceString));
+					}
+				}
+			}
 
 			// ✅ Editable τιμή από το textbox
 			public decimal Price
@@ -122,6 +148,7 @@ namespace HermesPOS.ViewModels
 				Product = product;
 				_quantity = 1;
 				_price = product.Price; // Ξεκινάμε με λιανική
+				_priceString = _price.ToString("0.00"); // για να γεμίζει το textbox
 				_onQuantityOrPriceChanged = onQuantityOrPriceChanged;
 			}
 

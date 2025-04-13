@@ -26,18 +26,5 @@ namespace HermesPOS.Views
 
 			this.Close(); // Αν θες να κλείνει το MainWindow
 		}
-
-		//ελέγχει τη το validation στο input τιμη
-		private void PriceTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
-		{
-			// Επιτρέπει μόνο αριθμούς, κόμμα και τελεία
-			string input = e.Text;
-
-			// Το Regex επιτρέπει χαρακτήρες 0-9, κόμμα (,) και τελεία (.)
-			Regex regex = new Regex(@"^[0-9.,]+$");
-
-			e.Handled = !regex.IsMatch(input);
-		}
-
 	}
 }

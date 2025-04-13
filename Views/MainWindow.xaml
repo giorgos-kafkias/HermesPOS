@@ -104,7 +104,7 @@
                         <GridViewColumn Header="Τιμή (€)" Width="100">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                    <TextBox Text="{Binding PriceString, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
