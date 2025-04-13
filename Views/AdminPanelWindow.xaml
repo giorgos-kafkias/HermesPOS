@@ -59,10 +59,11 @@
                   SelectedItem="{Binding SelectedProduct, Mode=TwoWay}">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="📌 Όνομα" Binding="{Binding Name}" Width="*"/>
-                            <DataGridTextColumn Header="💲 Τιμή (€)" Binding="{Binding Price}" Width="100"/>
-                            <DataGridTextColumn Header="📦 Απόθεμα" Binding="{Binding Stock}" Width="100"/>
+                            <DataGridTextColumn Header="💲 Τιμή (€)" Binding="{Binding Price, StringFormat={}{0:0.00}}" Width="80"/>
+                            <DataGridTextColumn Header="📦 Χονδρική (€)" Width="100" Binding="{Binding WholesalePrice, StringFormat={}{0:0.00}}" />
+                            <DataGridTextColumn Header="📦 Απόθεμα" Binding="{Binding Stock}" Width="80"/>
                             <DataGridTextColumn Header="🗂️ Κατηγορία" Binding="{Binding Category.Name}" Width="150"/>
-                            <DataGridTextColumn Header="🏭 Προμηθευτής" Binding="{Binding Supplier.Name}" Width="150"/>
+                            <DataGridTextColumn Header="🏭 Προμηθευτής" Binding="{Binding Supplier.Name}" Width="120"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

@@ -13,9 +13,13 @@
 
             <TextBlock Text="Τιμή:" FontSize="14"/>
             <TextBox Text="{Binding PriceText, UpdateSourceTrigger=PropertyChanged}" 
-         PreviewTextInput="DecimalValidationTextBox"  FontSize="14" Margin="0,5"/>
+                    PreviewTextInput="DecimalValidationTextBox"  FontSize="14" Margin="0,5"/>
+			
+			<TextBlock Text="Χονδρική Τιμή:" FontSize="14"/>
+			<TextBox Text="{Binding WholesalePriceText, UpdateSourceTrigger=PropertyChanged}"
+					 PreviewTextInput="DecimalValidationTextBox" FontSize="14" Margin="0,5"/>
 
-            <TextBlock Text="Αρχικό Απόθεμα:" FontSize="14"/>
+			<TextBlock Text="Αρχικό Απόθεμα:" FontSize="14"/>
             <TextBox Text="{Binding Stock, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Margin="0,5"/>
 
             <TextBlock Text="Κατηγορία:" FontSize="14"/>

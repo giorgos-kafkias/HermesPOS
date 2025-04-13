@@ -17,6 +17,7 @@ namespace HermesPOS.ViewModels
 		private int _stock;
 		private Category _selectedCategory;
 		private Supplier _selectedSupplier;
+		private string _wholesalePriceText;
 
 		public Product Product { get; private set; }
 
@@ -47,6 +48,16 @@ namespace HermesPOS.ViewModels
 			{
 				_price = value;
 				OnPropertyChanged(nameof(Price));
+			}
+		}
+
+		public string WholesalePriceText
+		{
+			get => _wholesalePriceText;
+			set
+			{
+				_wholesalePriceText = value;
+				OnPropertyChanged(nameof(WholesalePriceText));
 			}
 		}
 
@@ -104,6 +115,7 @@ namespace HermesPOS.ViewModels
 			Barcode = product.Barcode;
 			Name = product.Name;
 			Price = product.Price;
+			WholesalePriceText = product.WholesalePrice?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 			Stock = product.Stock;
 			SelectedCategory = product.Category;
 			SelectedSupplier = product.Supplier;
@@ -134,11 +146,20 @@ namespace HermesPOS.ViewModels
 				MessageBox.Show("Παρακαλώ συμπληρώστε όλα τα πεδία σωστά!", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Warning);
 				return;
 			}
+			decimal? wholesalePrice = null;
+
+			if (!string.IsNullOrWhiteSpace(WholesalePriceText))
+			{
+				var clean = WholesalePriceText.Replace(',', '.');
+				if (decimal.TryParse(clean, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+					wholesalePrice = parsed;
+			}
 
 			// ✅ Ενημέρωση του προϊόντος
 			Product.Barcode = Barcode;
 			Product.Name = Name;
 			Product.Price = Price;
+			Product.WholesalePrice = wholesalePrice;
 			Product.Stock = Stock;
 			Product.CategoryId = SelectedCategory.Id;
 			Product.SupplierId = SelectedSupplier.Id;

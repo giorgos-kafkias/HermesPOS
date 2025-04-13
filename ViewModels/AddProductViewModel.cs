@@ -42,6 +42,17 @@ namespace HermesPOS.ViewModels
 			}
 		}
 
+		private string _wholesalePriceText;
+		public string WholesalePriceText
+		{
+			get => _wholesalePriceText;
+			set
+			{
+				_wholesalePriceText = value;
+				OnPropertyChanged(nameof(WholesalePriceText));
+			}
+		}
+
 		public string Name { get; set; }
 		public decimal Price { get; private set; } // Η αριθμητική τιμή της τιμής του προϊόντος. Κρατάει την τελική τιμή που θα αποθηκευτεί στη βάση.
 		public int Stock { get; set; }
@@ -85,6 +96,17 @@ namespace HermesPOS.ViewModels
 				MessageBox.Show("Παρακαλώ συμπληρώστε όλα τα πεδία σωστά!", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Warning);
 				return;
 			}
+
+			decimal? wholesalePrice = null;
+
+			if (!string.IsNullOrWhiteSpace(WholesalePriceText))
+			{
+				var clean = WholesalePriceText.Replace(',', '.');
+
+				if (decimal.TryParse(clean, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+					wholesalePrice = parsed;
+			}
+
 			// Δημιουργία νέου προϊόντος με τα δεδομένα από το ViewModel
 			var newProduct = new Product
 			{
@@ -93,7 +115,8 @@ namespace HermesPOS.ViewModels
 				Price = Price,
 				Stock = Stock,
 				CategoryId = SelectedCategory.Id,
-				SupplierId = SelectedSupplier.Id
+				SupplierId = SelectedSupplier.Id,
+				WholesalePrice = wholesalePrice
 			};
 
 			await _unitOfWork.Products.AddAsync(newProduct);
