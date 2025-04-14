@@ -47,5 +47,9 @@ namespace HermesPOS.Views
 				MessageBox.Show("Λάθος κωδικός! Προσπαθήστε ξανά.", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Error);
 			}
 		}
+		private void Window_Loaded(object sender, RoutedEventArgs e)
+		{
+			PasswordBox.Focus(); // 👉 Ορισμός αρχικού focus στο πεδίο κωδικού
+		}
 	}
 }

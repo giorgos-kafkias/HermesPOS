@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using HermesPOS.Data.Repositories;
@@ -210,17 +211,39 @@ namespace HermesPOS.ViewModels
 			var product = await _unitOfWork.Products.GetByBarcodeAsync(ScannedBarcode.Trim());
 			if (product != null)
 			{
+				// 🛑 Έλεγχος αν το απόθεμα είναι μηδέν
+				if (product.Stock <= 0)
+				{
+					MessageBox.Show($"Το προϊόν \"{product.Name}\" δεν έχει διαθέσιμο απόθεμα.", "Μη διαθέσιμο", MessageBoxButton.OK, MessageBoxImage.Warning);
+					ScannedBarcode = string.Empty;
+					return;
+				}
+
 				var existingCartItem = CartItems.FirstOrDefault(c => c.Product.Barcode == ScannedBarcode);
+
 				if (existingCartItem != null)
-					existingCartItem.Quantity++;
+				{
+					// ✅ Έλεγχος να μη ξεπερνάμε το διαθέσιμο απόθεμα
+					if (existingCartItem.Quantity < product.Stock)
+					{
+						existingCartItem.Quantity++;
+					}
+					else
+					{
+						MessageBox.Show($"Δεν μπορείς να προσθέσεις περισσότερα. Απόθεμα: {product.Stock}.", "Περιορισμός", MessageBoxButton.OK, MessageBoxImage.Information);
+					}
+				}
 				else
+				{
 					CartItems.Add(new CartItem(product, UpdateTotalPrice));
+				}
 
 				UpdateTotalPrice();
 				ScannedBarcode = string.Empty;
 				OnPropertyChanged(nameof(CartItems));
 			}
 		}
+
 
 		private void UpdateTotalPrice()
 		{
