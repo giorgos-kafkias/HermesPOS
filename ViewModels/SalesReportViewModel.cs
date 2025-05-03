@@ -13,22 +13,6 @@ using System.Windows.Input;
 
 namespace HermesPOS.ViewModels
 {
-	//public class TotalAmountConverter : IValueConverter
-	//{
-	//	public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-	//	{
-	//		if (value is ObservableCollection<SalesSummaryItem> list)
-	//		{
-	//			var total = list.Sum(x => x.TotalAmount);
-	//			return $"Σύνολο: {total:0.00}€";
-	//		}
-	//		return "Σύνολο: 0.00€";
-	//	}
-
-	//	public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-	//		throw new NotImplementedException();
-	//}
-
 	public class SalesSummaryItem
 	{
 		public string Date { get; set; }
@@ -66,15 +50,23 @@ namespace HermesPOS.ViewModels
 
 			foreach (var sale in sales)
 			{
+				// ✅ Υπολογίζουμε το άθροισμα των τεμαχίων (από όλα τα SaleItems)
+				int totalQuantity = sale.Items?.Sum(i => i.Quantity) ?? 0;
+
+				// ✅ Υπολογίζουμε το άθροισμα ποσού πώλησης
+				decimal totalAmount = sale.Items?.Sum(i => i.Quantity * i.Price) ?? 0;
+
 				SalesSummary.Add(new SalesSummaryItem
 				{
 					Date = sale.SaleDate.ToString("dd/MM/yyyy HH:mm"),
-					TotalSales = sale.Quantity,
-					TotalAmount = sale.Quantity * sale.Price
+					TotalSales = totalQuantity,
+					TotalAmount = totalAmount
 				});
 			}
-			OnPropertyChanged(nameof(SalesSummary)); // ✅ Ενημερώνει το TextBlock κάτω
+
+			OnPropertyChanged(nameof(SalesSummary));
 		}
+
 		public async Task OnTabSelected()
 		{
 			if (SalesSummary.Count == 0)
