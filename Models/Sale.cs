@@ -1,26 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HermesPOS.Models
 {
 	public class Sale
 	{
 		[Key]
-		public int Id { get; set; } // Πρωτεύον κλειδί
+		public int Id { get; set; }
 
 		[Required]
-		public int ProductId { get; set; } // Ξένο κλειδί για το προϊόν
-		[ForeignKey("ProductId")]
-		public Product Product { get; set; }
+		public DateTime SaleDate { get; set; }
 
 		[Required]
-		public int Quantity { get; set; } // Ποσότητα πώλησης
+		public decimal TotalAmount { get; set; } // ✅ Συνολική αξία πώλησης
 
-		[Required]
-		public decimal Price { get; set; } // Τιμή κατά την πώληση
-
-		[Required]
-		public DateTime SaleDate { get; set; } // Ημερομηνία πώλησης
+		// ✅ Σχέση: Μία πώληση έχει πολλά προϊόντα
+		public ICollection<SaleItem> Items { get; set; } = new List<SaleItem>();
 	}
 }
