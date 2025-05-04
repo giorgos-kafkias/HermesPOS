@@ -38,7 +38,7 @@ namespace HermesPOS.ViewModels
 
 		public ICommand LoadSalesCommand { get; }
 		public ICommand DeleteSaleCommand { get; }
-
+		public ICommand EditSaleCommand { get; }
 
 		public SalesReportViewModel(IServiceProvider serviceProvider)
 		{
@@ -46,7 +46,7 @@ namespace HermesPOS.ViewModels
 			_unitOfWork = _serviceProvider.GetRequiredService<IUnitOfWork>(); // ✅ Διατήρηση UnitOfWork
 			LoadSalesCommand = new RelayCommand(async () => await LoadSalesAsync());
 			DeleteSaleCommand = new RelayCommand(async () => await DeleteSelectedSale(), () => SelectedSale != null);
-
+			EditSaleCommand = new RelayCommand<Sale>(EditSale);
 		}
 
 		private async Task LoadSalesAsync()
@@ -79,6 +79,13 @@ namespace HermesPOS.ViewModels
 				await _unitOfWork.CompleteAsync();
 				await LoadSalesAsync();
 			}
+		}
+		private void EditSale(Sale sale)
+		{
+			if (sale == null) return;
+
+			// ➕ Εδώ θα φτιάξουμε παράθυρο για επεξεργασία πώλησης (μελλοντικά)
+			System.Windows.MessageBox.Show($"Επεξεργασία πώλησης με ID: {sale.Id}");
 		}
 
 		public async Task OnTabSelected()
