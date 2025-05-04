@@ -48,22 +48,45 @@ namespace HermesPOS.ViewModels
 
 		private async Task SaveChangesAsync()
 		{
-			_originalSale.Items.Clear();
+			// 🔹 Φέρνουμε την πώληση από τη βάση για να πάρουμε τα προηγούμενα SaleItems
+			var saleInDb = await _unitOfWork.Sales.GetByIdAsync(_originalSale.Id);
 
-			foreach (var item in SaleItems)
+			if (saleInDb == null)
 			{
-				_originalSale.Items.Add(item);
+				MessageBox.Show("Η πώληση δεν βρέθηκε.", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Error);
+				return;
 			}
 
-			_originalSale.TotalAmount = SaleItems.Sum(i => i.Quantity * i.Price);
+			// 🔹 Ενημερώνουμε stock ανάλογα με τη διαφορά παλιής και νέας ποσότητας
+			foreach (var oldItem in saleInDb.Items)
+			{
+				var newItem = SaleItems.FirstOrDefault(i => i.ProductId == oldItem.ProductId);
 
-			await _unitOfWork.Sales.UpdateAsync(_originalSale);
+				if (newItem != null)
+				{
+					var difference = newItem.Quantity - oldItem.Quantity;
+
+					// ➕ Αν αύξησες την ποσότητα, αφαιρούμε από το stock
+					// ➖ Αν μείωσες την ποσότητα, προσθέτουμε στο stock
+					oldItem.Product.Stock -= difference;
+				}
+			}
+
+			// 🔹 Αντικαθιστούμε όλα τα SaleItems με τα νέα
+			saleInDb.Items.Clear();
+			foreach (var item in SaleItems)
+			{
+				saleInDb.Items.Add(item);
+			}
+
+			// 🔹 Υπολογίζουμε εκ νέου το σύνολο
+			saleInDb.TotalAmount = SaleItems.Sum(i => i.Quantity * i.Price);
+
 			await _unitOfWork.CompleteAsync();
 
-			MessageBox.Show("Η πώληση αποθηκεύτηκε με επιτυχία.", "Επιτυχία", MessageBoxButton.OK, MessageBoxImage.Information);
-
-			// Κλείνουμε το παράθυρο από View (θα το δεις σε επόμενο βήμα)
+			MessageBox.Show("Η πώληση αποθηκεύτηκε και ενημερώθηκε το απόθεμα.", "✅ Επιτυχία", MessageBoxButton.OK, MessageBoxImage.Information);
 		}
+
 
 		public event PropertyChangedEventHandler PropertyChanged;
 		private void OnPropertyChanged(string name) =>

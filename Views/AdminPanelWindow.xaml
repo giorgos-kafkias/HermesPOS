@@ -210,32 +210,30 @@
           AutoGenerateColumns="False"
           Margin="10"
           IsReadOnly="True">
-
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="🕓 Ημερομηνία" Binding="{Binding SaleDate, StringFormat=dd/MM/yyyy HH:mm}" Width="*"/>
-                            <DataGridTextColumn Header="📦 Προϊόντα" Binding="{Binding Items.Count}" Width="100"/>
-                            <DataGridTextColumn Header="💶 Σύνολο" Binding="{Binding TotalAmount, StringFormat=€0.00}" Width="150"/>
+                            <DataGridTextColumn Header="🕓 Ημερομηνία" Binding="{Binding SaleDate, StringFormat=dd/MM/yyyy HH:mm}" Width="*" />
+                            <DataGridTextColumn Header="📦 Προϊόντα" Binding="{Binding Items.Count}" Width="100" />
+                            <DataGridTextColumn Header="💶 Σύνολο" Binding="{Binding TotalAmount, StringFormat=€0.00}" Width="150" />
 
-                            <!-- 🔘 Κουμπιά Επεξεργασίας/Διαγραφής -->
+                            <!-- 🔘 Κουμπιά επεξεργασίας & διαγραφής -->
                             <DataGridTemplateColumn Header="Ενέργειες" Width="180">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Content="✏️" Width="40" Margin="2" 
-                                ToolTip="Επεξεργασία" 
-                                Command="{Binding DataContext.EditSaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}"/>
+                                            <Button Content="✏️" Width="40" Margin="2"
+                                ToolTip="Επεξεργασία"
+                                Command="{Binding DataContext.SalesReportViewModel.EditSaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}" />
                                             <Button Content="🗑️" Width="40" Margin="2"
                                 ToolTip="Διαγραφή"
-                                Command="{Binding DataContext.DeleteSaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}"/>
+                                Command="{Binding DataContext.SalesReportViewModel.DeleteSaleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
 
                     <!-- 🔹 Σύνολο κάτω από τον πίνακα -->
                     <!--<TextBlock Grid.Row="2"

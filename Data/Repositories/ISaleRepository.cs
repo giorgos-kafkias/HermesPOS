@@ -13,6 +13,7 @@ namespace HermesPOS.Data.Repositories
 		Task<IEnumerable<Sale>> GetSalesByDateRangeAsync(DateTime? fromDate, DateTime? toDate);
 		Task DeleteAsync(int saleId);
 		Task UpdateAsync(Sale sale);
+		Task<Sale> GetByIdAsync(int id);
 
 	}
 }

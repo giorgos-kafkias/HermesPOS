@@ -94,13 +94,21 @@ namespace HermesPOS.Data.Repositories
 		{
 			var sale = await _db.Sales
 				.Include(s => s.Items)
+				.ThenInclude(i => i.Product)
 				.FirstOrDefaultAsync(s => s.Id == saleId);
 
 			if (sale != null)
 			{
-				_db.Sales.Remove(sale);
+				// ✅ Επιστροφή ποσοτήτων στο απόθεμα
+				foreach (var item in sale.Items)
+				{
+					item.Product.Stock += item.Quantity;
+				}
+
+				_db.Sales.Remove(sale); // Διαγραφή της πώλησης (και των SaleItems)
 			}
 		}
+
 		public async Task UpdateAsync(Sale sale)
 		{
 			var existingSale = await _db.Sales
@@ -117,6 +125,13 @@ namespace HermesPOS.Data.Repositories
 				existingSale.TotalAmount = sale.TotalAmount;
 				existingSale.SaleDate = sale.SaleDate;
 			}
+		}
+		public async Task<Sale> GetByIdAsync(int id)
+		{
+			return await _db.Sales
+				.Include(s => s.Items)
+				.ThenInclude(i => i.Product)
+				.FirstOrDefaultAsync(s => s.Id == id);
 		}
 
 	}
