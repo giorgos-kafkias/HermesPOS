@@ -89,5 +89,18 @@ namespace HermesPOS.Data.Repositories
 
 			return result;
 		}
+		//διαγραφή πώλησης
+		public async Task DeleteAsync(int saleId)
+		{
+			var sale = await _db.Sales
+				.Include(s => s.Items)
+				.FirstOrDefaultAsync(s => s.Id == saleId);
+
+			if (sale != null)
+			{
+				_db.Sales.Remove(sale);
+			}
+		}
+
 	}
 }

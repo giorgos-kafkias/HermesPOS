@@ -11,5 +11,7 @@ namespace HermesPOS.Data.Repositories
 		Task<IEnumerable<BestSellerItem>> GetBestSellingProductsAsync(int topN,	int? categoryId = null,	int? supplierId = null,	DateTime? fromDate = null,
 																		DateTime? toDate = null);
 		Task<IEnumerable<Sale>> GetSalesByDateRangeAsync(DateTime? fromDate, DateTime? toDate);
+		Task DeleteAsync(int saleId);
+
 	}
 }

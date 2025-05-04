@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using HermesPOS.Data.Repositories;
 using HermesPOS.Models;
@@ -135,7 +136,6 @@ namespace HermesPOS.ViewModels
 				int? supplierId = SelectedSupplier?.Id == 0 ? null : SelectedSupplier?.Id;
 
 				var bestsellers = await _unitOfWork.Sales.GetBestSellingProductsAsync(TopN, categoryId, supplierId, FromDate, ToDate);
-
 				Bestsellers.Clear();
 				foreach (var item in bestsellers)
 					Bestsellers.Add(item);

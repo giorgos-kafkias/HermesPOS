@@ -176,8 +176,8 @@
                     <DataGrid Grid.Row="1" ItemsSource="{Binding BestsellerViewModel.Bestsellers}" AutoGenerateColumns="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding ProductId}" Width="50"/>
-                            <DataGridTextColumn Header="Προϊόν" Binding="{Binding Product.Name}" Width="*"/>
-                            <DataGridTextColumn Header="Πωλήσεις" Binding="{Binding Quantity}" Width="100"/>
+                            <DataGridTextColumn Header="Προϊόν" Binding="{Binding ProductName}" Width="*" />
+                            <DataGridTextColumn Header="Πωλήσεις" Binding="{Binding TotalQuantitySold}" Width="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

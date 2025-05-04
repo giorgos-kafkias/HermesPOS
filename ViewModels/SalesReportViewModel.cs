@@ -13,35 +13,45 @@ using System.Windows.Input;
 
 namespace HermesPOS.ViewModels
 {
-	public class SalesSummaryItem
-	{
-		public string Date { get; set; }
-		public int TotalSales { get; set; }
-		public decimal TotalAmount { get; set; }
-	}
-
 	public class SalesReportViewModel : INotifyPropertyChanged
 	{
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly IServiceProvider _serviceProvider;
 
-		public ObservableCollection<SalesSummaryItem> SalesSummary { get; set; } = new();
+		public ObservableCollection<Sale> Sales { get; set; } = new();
+
+		private Sale _selectedSale;
+		public Sale SelectedSale
+		{
+			get => _selectedSale;
+			set
+			{
+				_selectedSale = value;
+				OnPropertyChanged(nameof(SelectedSale));
+				((RelayCommand)DeleteSaleCommand).RaiseCanExecuteChanged();
+			}
+		}
+
 
 		public DateTime? FromDate { get; set; } = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 		public DateTime? ToDate { get; set; } = DateTime.Today;
 
 		public ICommand LoadSalesCommand { get; }
+		public ICommand DeleteSaleCommand { get; }
+
 
 		public SalesReportViewModel(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider;
 			_unitOfWork = _serviceProvider.GetRequiredService<IUnitOfWork>(); // ✅ Διατήρηση UnitOfWork
 			LoadSalesCommand = new RelayCommand(async () => await LoadSalesAsync());
+			DeleteSaleCommand = new RelayCommand(async () => await DeleteSelectedSale(), () => SelectedSale != null);
+
 		}
 
 		private async Task LoadSalesAsync()
 		{
-			SalesSummary.Clear();
+			Sales.Clear();
 
 			var sales = await _unitOfWork.Sales.GetSalesByDateRangeAsync(
 				FromDate ?? DateTime.MinValue,
@@ -50,26 +60,30 @@ namespace HermesPOS.ViewModels
 
 			foreach (var sale in sales)
 			{
-				// ✅ Υπολογίζουμε το άθροισμα των τεμαχίων (από όλα τα SaleItems)
+				Sales.Add(sale);
+
 				int totalQuantity = sale.Items?.Sum(i => i.Quantity) ?? 0;
-
-				// ✅ Υπολογίζουμε το άθροισμα ποσού πώλησης
 				decimal totalAmount = sale.Items?.Sum(i => i.Quantity * i.Price) ?? 0;
-
-				SalesSummary.Add(new SalesSummaryItem
-				{
-					Date = sale.SaleDate.ToString("dd/MM/yyyy HH:mm"),
-					TotalSales = totalQuantity,
-					TotalAmount = totalAmount
-				});
 			}
+			OnPropertyChanged(nameof(Sales));
+		}
 
-			OnPropertyChanged(nameof(SalesSummary));
+
+		private async Task DeleteSelectedSale()
+		{
+			if (SelectedSale == null) return;
+
+			if (System.Windows.MessageBox.Show("Θέλεις σίγουρα να διαγράψεις αυτή την πώληση;", "Επιβεβαίωση", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) == System.Windows.MessageBoxResult.Yes)
+			{
+				await _unitOfWork.Sales.DeleteAsync(SelectedSale.Id);
+				await _unitOfWork.CompleteAsync();
+				await LoadSalesAsync();
+			}
 		}
 
 		public async Task OnTabSelected()
 		{
-			if (SalesSummary.Count == 0)
+			if (Sales.Count == 0)
 				await LoadSalesAsync();
 		}
 
