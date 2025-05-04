@@ -101,6 +101,23 @@ namespace HermesPOS.Data.Repositories
 				_db.Sales.Remove(sale);
 			}
 		}
+		public async Task UpdateAsync(Sale sale)
+		{
+			var existingSale = await _db.Sales
+				.Include(s => s.Items)
+				.FirstOrDefaultAsync(s => s.Id == sale.Id);
+
+			if (existingSale != null)
+			{
+				// Καθαρίζουμε τα παλιά SaleItems
+				_db.SaleItems.RemoveRange(existingSale.Items);
+
+				// Ενημερώνουμε το Sale με τα νέα SaleItems
+				existingSale.Items = sale.Items;
+				existingSale.TotalAmount = sale.TotalAmount;
+				existingSale.SaleDate = sale.SaleDate;
+			}
+		}
 
 	}
 }

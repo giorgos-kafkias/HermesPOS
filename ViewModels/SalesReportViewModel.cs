@@ -1,5 +1,6 @@
 ﻿using HermesPOS.Data.Repositories;
 using HermesPOS.Models;
+using HermesPOS.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
@@ -84,8 +85,12 @@ namespace HermesPOS.ViewModels
 		{
 			if (sale == null) return;
 
-			// ➕ Εδώ θα φτιάξουμε παράθυρο για επεξεργασία πώλησης (μελλοντικά)
-			System.Windows.MessageBox.Show($"Επεξεργασία πώλησης με ID: {sale.Id}");
+			var viewModel = _serviceProvider.GetRequiredService<EditSaleViewModel>();
+			var window = new EditSaleWindow(viewModel, sale);
+			window.ShowDialog();
+
+			// Μετά το κλείσιμο, ανανέωσε τις πωλήσεις
+			_ = LoadSalesAsync();
 		}
 
 		public async Task OnTabSelected()
