@@ -57,7 +57,32 @@ namespace HermesPOS.ViewModels
 				return;
 			}
 
-			// 🔹 Ενημερώνουμε stock ανάλογα με τη διαφορά παλιής και νέας ποσότητας
+			// 🔍 Πρώτα κάνουμε έλεγχο διαθεσιμότητας αποθέματος για κάθε προϊόν
+			foreach (var newItem in SaleItems)
+			{
+				var oldItem = saleInDb.Items.FirstOrDefault(i => i.ProductId == newItem.ProductId);
+				int oldQuantity = oldItem?.Quantity ?? 0;
+
+				// Διαφορά = νέα - παλιά
+				int difference = newItem.Quantity - oldQuantity;
+
+				if (difference > 0)
+				{
+					// Αν προσπαθείς να αυξήσεις την ποσότητα, πρέπει να υπάρχει διαθέσιμο stock
+					var product = await _unitOfWork.Products.GetByIdAsync(newItem.ProductId);
+
+					if (product.Stock < difference)
+					{
+						MessageBox.Show(
+							$"Το προϊόν \"{product.Name}\" έχει διαθέσιμα μόνο {product.Stock} τεμάχια.\nΔεν μπορείς να ορίσεις ποσότητα {newItem.Quantity}.",
+							"❌ Ανεπαρκές Απόθεμα",
+							MessageBoxButton.OK, MessageBoxImage.Warning);
+						return; // ❌ Διακόπτουμε την αποθήκευση
+					}
+				}
+			}
+
+			// 🔄 Ενημερώνουμε τα αποθέματα ανάλογα με τη διαφορά
 			foreach (var oldItem in saleInDb.Items)
 			{
 				var newItem = SaleItems.FirstOrDefault(i => i.ProductId == oldItem.ProductId);
@@ -66,20 +91,19 @@ namespace HermesPOS.ViewModels
 				{
 					var difference = newItem.Quantity - oldItem.Quantity;
 
-					// ➕ Αν αύξησες την ποσότητα, αφαιρούμε από το stock
-					// ➖ Αν μείωσες την ποσότητα, προσθέτουμε στο stock
+					// Ενημέρωση stock
 					oldItem.Product.Stock -= difference;
 				}
 			}
 
-			// 🔹 Αντικαθιστούμε όλα τα SaleItems με τα νέα
+			// 🔁 Αντικατάσταση των SaleItems
 			saleInDb.Items.Clear();
 			foreach (var item in SaleItems)
 			{
 				saleInDb.Items.Add(item);
 			}
 
-			// 🔹 Υπολογίζουμε εκ νέου το σύνολο
+			// 💶 Επαναϋπολογισμός ποσού
 			saleInDb.TotalAmount = SaleItems.Sum(i => i.Quantity * i.Price);
 
 			await _unitOfWork.CompleteAsync();
