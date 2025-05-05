@@ -32,6 +32,16 @@ namespace HermesPOS.ViewModels
 				((RelayCommand)DeleteSaleCommand).RaiseCanExecuteChanged();
 			}
 		}
+		private decimal _totalAmount;
+		public decimal TotalAmount
+		{
+			get => _totalAmount;
+			set
+			{
+				_totalAmount = value;
+				OnPropertyChanged(nameof(TotalAmount));
+			}
+		}
 
 
 		public DateTime? FromDate { get; set; } = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
@@ -67,6 +77,7 @@ namespace HermesPOS.ViewModels
 				decimal totalAmount = sale.Items?.Sum(i => i.Quantity * i.Price) ?? 0;
 			}
 			OnPropertyChanged(nameof(Sales));
+			TotalAmount = Sales.Sum(s => s.TotalAmount);
 		}
 
 

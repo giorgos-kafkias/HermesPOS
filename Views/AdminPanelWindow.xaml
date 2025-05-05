@@ -236,10 +236,10 @@
                     </DataGrid>
 
                     <!-- 🔹 Σύνολο κάτω από τον πίνακα -->
-                    <!--<TextBlock Grid.Row="2"
-                       Text="{Binding SalesReportViewModel.SalesSummary, Converter={StaticResource TotalAmountConverter}}"
-                       FontWeight="Bold" FontSize="14"
-                       HorizontalAlignment="Right" Margin="10"/>-->
+                    <TextBlock Grid.Row="2"
+                        Text="{Binding SalesReportViewModel.TotalAmount, StringFormat=Σύνολο: €{0:0.00}}"
+                        FontWeight="Bold" FontSize="14"
+                        HorizontalAlignment="Right" Margin="10"/>
                 </Grid>
             </TabItem>
 
