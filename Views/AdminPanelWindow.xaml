@@ -1,18 +1,71 @@
 ﻿<Window x:Class="HermesPOS.Views.AdminPanelWindow"
-            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-            xmlns:converters="clr-namespace:HermesPOS.Converters"
-            xmlns:views="clr-namespace:HermesPOS.Views"
-            xmlns:sys="clr-namespace:System;assembly=mscorlib"
-            Title="Πίνακας Διαχειριστή"
-            Height="600" Width="800"
-            WindowStartupLocation="CenterScreen">
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:HermesPOS.Converters"
+        xmlns:views="clr-namespace:HermesPOS.Views"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="Πίνακας Διαχειριστή"
+        Height="600" Width="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#E3F2FD">
 
-    <!--<Window.Resources>
+    <Window.Resources>
+        <!-- Modern Light Blue Button Style -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#42A5F5"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1E88E5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1565C0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        --><!-- 🔹 Converter για σύνολο εσόδων --><!--
-        <converters:TotalAmountConverter x:Key="TotalAmountConverter"/>
-    </Window.Resources>-->
+        <!-- TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <!-- Title Style -->
+        <Style x:Key="TitleText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#1565C0"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="20"/>
+        </Style>
+
+        <!-- Total Text Style -->
+        <Style x:Key="TotalText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#0D47A1"/>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
