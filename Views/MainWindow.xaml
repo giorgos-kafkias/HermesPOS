@@ -58,9 +58,9 @@
 
         <!-- Total Text Style -->
         <Style x:Key="TotalText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontSize" Value="27"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#0D47A1"/>
+            <Setter Property="Foreground" Value="black"/>
         </Style>
     </Window.Resources>
 
@@ -80,7 +80,7 @@
                 HorizontalAlignment="Left" Grid.Row="0"/>
 
         <!-- Title -->
-        <TextBlock Text="Hermes POS System" Style="{StaticResource TitleText}" Grid.Row="1"/>
+        <TextBlock Text="HERMES" Style="{StaticResource TitleText}" Grid.Row="1"/>
 
         <!-- Scanner Row -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,10">
@@ -95,7 +95,29 @@
 
         <!-- List of Products -->
         <Border Grid.Row="3" Background="White" CornerRadius="10" Padding="10" BorderBrush="#BBDEFB" BorderThickness="1">
-            <ListView ItemsSource="{Binding CartItems}">
+            <ListView ItemsSource="{Binding CartItems}" Foreground="Black">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="BorderBrush" Value="#444444"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="FontSize" Value="18"/>
+                        <Setter Property="Padding" Value="2"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListViewItem">
+                                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                                        <GridViewRowPresenter VerticalAlignment="Center"
+                                              Content="{TemplateBinding Content}"
+                                              Columns="{Binding Path=View.Columns, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                              SnapsToDevicePixels="True"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Όνομα Προϊόντος" Width="250" DisplayMemberBinding="{Binding Product.Name}" />

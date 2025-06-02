@@ -45,9 +45,18 @@ namespace HermesPOS
 			return Host.CreateDefaultBuilder()
 				.ConfigureServices((context, services) =>
 				{
-					// 🔹 Προσθήκη της βάσης δεδομένων από το appsettings.json
+					//// 🔹 Προσθήκη της βάσης δεδομένων από το appsettings.json
+					//services.AddDbContext<ApplicationDbContext>(options =>
+					//	options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
+					// Παίρνουμε το κρυπτογραφημένο connection string
+					var encryptedConnectionString = context.Configuration.GetConnectionString("DefaultConnection");
+
+					// Κάνουμε decrypt
+					var decryptedConnectionString = CryptoHelper.Decrypt(encryptedConnectionString);
+
+					// Χρησιμοποιούμε το ξεκρυπτογραφημένο string για τη βάση
 					services.AddDbContext<ApplicationDbContext>(options =>
-						options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
+						options.UseSqlServer(decryptedConnectionString), ServiceLifetime.Scoped);
 
 					// 🔹 Προσθήκη των Repositories
 					services.AddScoped<IProductRepository, ProductRepository>();
