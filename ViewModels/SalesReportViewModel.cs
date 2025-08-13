@@ -1,5 +1,6 @@
 ﻿using HermesPOS.Data.Repositories;
 using HermesPOS.Models;
+using HermesPOS.Views;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
@@ -13,51 +14,55 @@ using System.Windows.Input;
 
 namespace HermesPOS.ViewModels
 {
-	//public class TotalAmountConverter : IValueConverter
-	//{
-	//	public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-	//	{
-	//		if (value is ObservableCollection<SalesSummaryItem> list)
-	//		{
-	//			var total = list.Sum(x => x.TotalAmount);
-	//			return $"Σύνολο: {total:0.00}€";
-	//		}
-	//		return "Σύνολο: 0.00€";
-	//	}
-
-	//	public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-	//		throw new NotImplementedException();
-	//}
-
-	public class SalesSummaryItem
-	{
-		public string Date { get; set; }
-		public int TotalSales { get; set; }
-		public decimal TotalAmount { get; set; }
-	}
-
 	public class SalesReportViewModel : INotifyPropertyChanged
 	{
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly IServiceProvider _serviceProvider;
 
-		public ObservableCollection<SalesSummaryItem> SalesSummary { get; set; } = new();
+		public ObservableCollection<Sale> Sales { get; set; } = new();
+
+		private Sale _selectedSale;
+		public Sale SelectedSale
+		{
+			get => _selectedSale;
+			set
+			{
+				_selectedSale = value;
+				OnPropertyChanged(nameof(SelectedSale));
+				((RelayCommand)DeleteSaleCommand).RaiseCanExecuteChanged();
+			}
+		}
+		private decimal _totalAmount;
+		public decimal TotalAmount
+		{
+			get => _totalAmount;
+			set
+			{
+				_totalAmount = value;
+				OnPropertyChanged(nameof(TotalAmount));
+			}
+		}
+
 
 		public DateTime? FromDate { get; set; } = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 		public DateTime? ToDate { get; set; } = DateTime.Today;
 
 		public ICommand LoadSalesCommand { get; }
+		public ICommand DeleteSaleCommand { get; }
+		public ICommand EditSaleCommand { get; }
 
 		public SalesReportViewModel(IServiceProvider serviceProvider)
 		{
 			_serviceProvider = serviceProvider;
 			_unitOfWork = _serviceProvider.GetRequiredService<IUnitOfWork>(); // ✅ Διατήρηση UnitOfWork
 			LoadSalesCommand = new RelayCommand(async () => await LoadSalesAsync());
+			DeleteSaleCommand = new RelayCommand(async () => await DeleteSelectedSale(), () => SelectedSale != null);
+			EditSaleCommand = new RelayCommand<Sale>(EditSale);
 		}
 
 		private async Task LoadSalesAsync()
 		{
-			SalesSummary.Clear();
+			Sales.Clear();
 
 			var sales = await _unitOfWork.Sales.GetSalesByDateRangeAsync(
 				FromDate ?? DateTime.MinValue,
@@ -66,18 +71,42 @@ namespace HermesPOS.ViewModels
 
 			foreach (var sale in sales)
 			{
-				SalesSummary.Add(new SalesSummaryItem
-				{
-					Date = sale.SaleDate.ToString("dd/MM/yyyy HH:mm"),
-					TotalSales = sale.Quantity,
-					TotalAmount = sale.Quantity * sale.Price
-				});
+				Sales.Add(sale);
+
+				int totalQuantity = sale.Items?.Sum(i => i.Quantity) ?? 0;
+				decimal totalAmount = sale.Items?.Sum(i => i.Quantity * i.Price) ?? 0;
 			}
-			OnPropertyChanged(nameof(SalesSummary)); // ✅ Ενημερώνει το TextBlock κάτω
+			OnPropertyChanged(nameof(Sales));
+			TotalAmount = Sales.Sum(s => s.TotalAmount);
 		}
+
+
+		private async Task DeleteSelectedSale()
+		{
+			if (SelectedSale == null) return;
+
+			if (System.Windows.MessageBox.Show("Θέλεις σίγουρα να διαγράψεις αυτή την πώληση;", "Επιβεβαίωση", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) == System.Windows.MessageBoxResult.Yes)
+			{
+				await _unitOfWork.Sales.DeleteAsync(SelectedSale.Id);
+				await _unitOfWork.CompleteAsync();
+				await LoadSalesAsync();
+			}
+		}
+		private void EditSale(Sale sale)
+		{
+			if (sale == null) return;
+
+			var viewModel = _serviceProvider.GetRequiredService<EditSaleViewModel>();
+			var window = new EditSaleWindow(viewModel, sale);
+			window.ShowDialog();
+
+			// Μετά το κλείσιμο, ανανέωσε τις πωλήσεις
+			_ = LoadSalesAsync();
+		}
+
 		public async Task OnTabSelected()
 		{
-			if (SalesSummary.Count == 0)
+			if (Sales.Count == 0)
 				await LoadSalesAsync();
 		}
 

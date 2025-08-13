@@ -16,58 +16,28 @@ namespace HermesPOS.Data.Repositories
 			_db = db;
 		}
 
-		// ✅ Προσθήκη νέας πώλησης
+		// ✅ Προσθήκη νέας πώλησης (με προϊόντα)
 		public async Task AddSaleAsync(Sale sale)
 		{
 			await _db.Sales.AddAsync(sale);
-			//await _db.SaveChangesAsync();
 		}
 
+		// ✅ Πωλήσεις συγκεκριμένης ημέρας (με προϊόντα)
 		public async Task<IEnumerable<Sale>> GetSalesByDateAsync(DateTime date)
 		{
 			return await _db.Sales
 				.Where(s => s.SaleDate.Date == date.Date)
-				.Include(s => s.Product)
+				.Include(s => s.Items)                // Φέρνουμε τα SaleItems
+					.ThenInclude(si => si.Product)    // Και τα προϊόντα τους
 				.ToListAsync();
 		}
 
-		public async Task<IEnumerable<Sale>> GetBestSellingProductsAsync(int topN, int? categoryId = null, int? supplierId = null, DateTime? fromDate = null, DateTime? toDate = null)
-		{
-			var query = _db.Sales
-				.Include(s => s.Product)
-				.AsQueryable();
-
-			if (categoryId.HasValue)
-				query = query.Where(s => s.Product.CategoryId == categoryId.Value);
-
-			if (supplierId.HasValue)
-				query = query.Where(s => s.Product.SupplierId == supplierId.Value);
-
-			if (fromDate.HasValue)
-				query = query.Where(s => s.SaleDate >= fromDate.Value);
-
-			if (toDate.HasValue)
-				query = query.Where(s => s.SaleDate <= toDate.Value);
-
-			var result = await query
-				.GroupBy(s => new { s.ProductId, s.Product.Name })
-				.Select(g => new Sale
-				{
-					ProductId = g.Key.ProductId,
-					Product = new Product { Name = g.Key.Name }, // Δημιουργούμε νέο αντικείμενο Product
-					Quantity = g.Sum(s => s.Quantity), // Συνολική ποσότητα πωλήσεων
-					SaleDate = DateTime.Now // Δεν έχει σημασία η ημερομηνία για τα bestsellers
-				})
-				.OrderByDescending(s => s.Quantity)
-				.Take(topN)
-				.ToListAsync();
-
-			return result;
-		}
+		// ✅ Πωλήσεις ανά χρονικό διάστημα (με προϊόντα)
 		public async Task<IEnumerable<Sale>> GetSalesByDateRangeAsync(DateTime? fromDate, DateTime? toDate)
 		{
 			var query = _db.Sales
-				.Include(s => s.Product)
+				.Include(s => s.Items)
+					.ThenInclude(si => si.Product)
 				.AsQueryable();
 
 			if (fromDate.HasValue)
@@ -77,6 +47,91 @@ namespace HermesPOS.Data.Repositories
 				query = query.Where(s => s.SaleDate <= toDate.Value);
 
 			return await query.ToListAsync();
+		}
+
+		// ✅ Best Seller Προϊόντα (με βάση τα SaleItems)
+		public async Task<IEnumerable<BestSellerItem>> GetBestSellingProductsAsync(
+			int topN,
+			int? categoryId = null,
+			int? supplierId = null,
+			DateTime? fromDate = null,
+			DateTime? toDate = null)
+		{
+			var query = _db.SaleItems
+				.Include(si => si.Product)
+				.Include(si => si.Sale)
+				.AsQueryable();
+
+			if (categoryId.HasValue)
+				query = query.Where(si => si.Product.CategoryId == categoryId.Value);
+
+			if (supplierId.HasValue)
+				query = query.Where(si => si.Product.SupplierId == supplierId.Value);
+
+			if (fromDate.HasValue)
+				query = query.Where(si => si.Sale.SaleDate >= fromDate.Value);
+
+			if (toDate.HasValue)
+				query = query.Where(si => si.Sale.SaleDate <= toDate.Value);
+
+			// Ομαδοποιούμε τα προϊόντα και υπολογίζουμε συνολικές πωλήσεις
+			var result = await query
+				.GroupBy(si => new { si.ProductId, si.Product.Name })
+				.Select(g => new BestSellerItem
+				{
+					ProductId = g.Key.ProductId,
+					ProductName = g.Key.Name,
+					TotalQuantitySold = g.Sum(si => si.Quantity)
+				})
+				.OrderByDescending(x => x.TotalQuantitySold)
+				.Take(topN)
+				.ToListAsync();
+
+			return result;
+		}
+		//διαγραφή πώλησης
+		public async Task DeleteAsync(int saleId)
+		{
+			var sale = await _db.Sales
+				.Include(s => s.Items)
+				.ThenInclude(i => i.Product)
+				.FirstOrDefaultAsync(s => s.Id == saleId);
+
+			if (sale != null)
+			{
+				// ✅ Επιστροφή ποσοτήτων στο απόθεμα
+				foreach (var item in sale.Items)
+				{
+					item.Product.Stock += item.Quantity;
+				}
+
+				_db.Sales.Remove(sale); // Διαγραφή της πώλησης (και των SaleItems)
+			}
+		}
+
+		public async Task UpdateAsync(Sale sale)
+		{
+			var existingSale = await _db.Sales
+				.Include(s => s.Items)
+				.FirstOrDefaultAsync(s => s.Id == sale.Id);
+
+			if (existingSale != null)
+			{
+				// Καθαρίζουμε τα παλιά SaleItems
+				_db.SaleItems.RemoveRange(existingSale.Items);
+
+				// Ενημερώνουμε το Sale με τα νέα SaleItems
+				existingSale.Items = sale.Items;
+				existingSale.TotalAmount = sale.TotalAmount;
+				existingSale.SaleDate = sale.SaleDate;
+			}
+		}
+		public async Task<Sale> GetByIdAsync(int id)
+		{
+			return await _db.Sales
+				.Include(s => s.Items)
+				.ThenInclude(i => i.Product)
+				.FirstOrDefaultAsync(s => s.Id == id);
 		}
 
 	}

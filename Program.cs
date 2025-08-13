@@ -66,7 +66,7 @@ namespace HermesPOS
 					services.AddTransient<EditCategoryOrSupplierViewModel>();
 					services.AddTransient<BestsellerViewModel>();
 					services.AddTransient<SalesReportViewModel>();
-
+					services.AddTransient<EditSaleViewModel>();
 
 					// 🔹 Προσθήκη των Views
 					services.AddScoped<MainWindow>();
@@ -78,6 +78,7 @@ namespace HermesPOS
 					services.AddScoped<LoginWindow>();
 					services.AddScoped<EditProductWindow>();
 					services.AddScoped<EditCategoryOrSupplierView>();
+					services.AddScoped< EditSaleWindow>();
 				});
 		}	
 	}

@@ -274,30 +274,49 @@ namespace HermesPOS.ViewModels
 
 		private async Task CompleteTransaction()
 		{
+			if (!CartItems.Any()) return;
+
+			// 🔹 Δημιουργούμε νέο αντικείμενο Sale (κεφαλίδα πώλησης)
+			var sale = new Sale
+			{
+				SaleDate = DateTime.Now,
+				TotalAmount = CartItems.Sum(c => c.TotalPrice), // ✅ Σύνολο όλων των προϊόντων
+				Items = new List<SaleItem>() // ✅ Γραμμές προϊόντων
+			};
+
 			foreach (var cartItem in CartItems)
 			{
-				if (cartItem.Product.Stock >= cartItem.Quantity)
+				// 🛑 Έλεγχος αν υπάρχει αρκετό απόθεμα
+				if (cartItem.Product.Stock < cartItem.Quantity)
 				{
-					cartItem.Product.Stock -= cartItem.Quantity;
-					await _unitOfWork.Products.UpdateAsync(cartItem.Product);
-
-					var sale = new Sale
-					{
-						ProductId = cartItem.Product.Id,
-						Quantity = cartItem.Quantity,
-						SaleDate = DateTime.Now,
-						Price = cartItem.Price
-					};
-					await _unitOfWork.Sales.AddSaleAsync(sale);
+					MessageBox.Show($"Το προϊόν \"{cartItem.Product.Name}\" δεν έχει αρκετό απόθεμα.", "Προσοχή", MessageBoxButton.OK, MessageBoxImage.Warning);
+					return;
 				}
-				Debug.WriteLine(">>> Saving sale for product: " + cartItem.Product.Name);
+
+				// 🔻 Αφαιρούμε ποσότητα από το stock
+				cartItem.Product.Stock -= cartItem.Quantity;
+				await _unitOfWork.Products.UpdateAsync(cartItem.Product);
+
+				// 🔹 Δημιουργούμε SaleItem
+				var item = new SaleItem
+				{
+					ProductId = cartItem.Product.Id,
+					Quantity = cartItem.Quantity,
+					Price = cartItem.Price
+				};
+
+				sale.Items.Add(item);
 			}
 
+			// 🔹 Αποθηκεύουμε την πώληση με τα προϊόντα της
+			await _unitOfWork.Sales.AddSaleAsync(sale);
 			await _unitOfWork.CompleteAsync();
 
+			// 🔹 Καθαρισμός καλαθιού
 			CartItems.Clear();
 			TotalPrice = 0;
 		}
+
 
 		public event PropertyChangedEventHandler PropertyChanged;
 		protected void OnPropertyChanged(string propertyName) =>

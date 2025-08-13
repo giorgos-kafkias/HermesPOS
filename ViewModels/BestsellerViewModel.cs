@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using HermesPOS.Data.Repositories;
 using HermesPOS.Models;
@@ -17,7 +18,7 @@ namespace HermesPOS.ViewModels
 		private Supplier _selectedSupplier;
 		private int _topN = 10;
 
-		public ObservableCollection<Sale> Bestsellers { get; set; } = new();
+		public ObservableCollection<BestSellerItem> Bestsellers { get; set; } = new();
 		public ObservableCollection<Category> Categories { get; set; } = new();
 		public ObservableCollection<Supplier> Suppliers { get; set; } = new();
 		public ObservableCollection<int> TopNOptions { get; } = new ObservableCollection<int> { 5, 10, 20 };
@@ -135,10 +136,9 @@ namespace HermesPOS.ViewModels
 				int? supplierId = SelectedSupplier?.Id == 0 ? null : SelectedSupplier?.Id;
 
 				var bestsellers = await _unitOfWork.Sales.GetBestSellingProductsAsync(TopN, categoryId, supplierId, FromDate, ToDate);
-
 				Bestsellers.Clear();
-				foreach (var sale in bestsellers)
-					Bestsellers.Add(sale);
+				foreach (var item in bestsellers)
+					Bestsellers.Add(item);
 			}
 			catch (Exception ex)
 			{

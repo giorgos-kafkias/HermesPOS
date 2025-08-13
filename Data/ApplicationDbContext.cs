@@ -16,6 +16,7 @@ namespace HermesPOS.Data
 		public DbSet<Supplier> Suppliers { get; set; }
 		public DbSet<Category> Categories { get; set; }
 		public DbSet<Sale> Sales { get; set; }
+		public DbSet<SaleItem> SaleItems { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -34,11 +35,17 @@ namespace HermesPOS.Data
 				.HasForeignKey(p => p.CategoryId)
 				.OnDelete(DeleteBehavior.SetNull); // ❗
 
-			modelBuilder.Entity<Sale>()
-				.HasOne(s => s.Product)
-				.WithMany()
-				.HasForeignKey(s => s.ProductId)
+			modelBuilder.Entity<SaleItem>()
+				.HasOne(si => si.Sale)
+				.WithMany(s => s.Items)
+				.HasForeignKey(si => si.SaleId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+			modelBuilder.Entity<SaleItem>()
+				.HasOne(si => si.Product)
+				.WithMany()
+				.HasForeignKey(si => si.ProductId)
+				.OnDelete(DeleteBehavior.Restrict);
 		}
 	}
 }

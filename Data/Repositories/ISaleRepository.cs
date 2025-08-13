@@ -8,7 +8,12 @@ namespace HermesPOS.Data.Repositories
 	{
 		Task AddSaleAsync(Sale sale);
 		Task<IEnumerable<Sale>> GetSalesByDateAsync(DateTime date);
-		Task<IEnumerable<Sale>> GetBestSellingProductsAsync(int topN, int? categoryId = null, int? supplierId = null, DateTime? fromDate = null, DateTime? toDate = null);
+		Task<IEnumerable<BestSellerItem>> GetBestSellingProductsAsync(int topN,	int? categoryId = null,	int? supplierId = null,	DateTime? fromDate = null,
+																		DateTime? toDate = null);
 		Task<IEnumerable<Sale>> GetSalesByDateRangeAsync(DateTime? fromDate, DateTime? toDate);
+		Task DeleteAsync(int saleId);
+		Task UpdateAsync(Sale sale);
+		Task<Sale> GetByIdAsync(int id);
+
 	}
 }
