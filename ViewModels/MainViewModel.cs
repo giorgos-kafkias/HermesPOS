@@ -242,6 +242,12 @@ namespace HermesPOS.ViewModels
 				ScannedBarcode = string.Empty;
 				OnPropertyChanged(nameof(CartItems));
 			}
+			else
+			{
+				// 📢 Αν δεν βρεθεί προϊόν με αυτό το barcode
+				MessageBox.Show($"Το προϊόν με barcode \"{ScannedBarcode}\" δεν βρέθηκε.", "Μη διαθέσιμο προϊόν", MessageBoxButton.OK, MessageBoxImage.Error);
+				ScannedBarcode = string.Empty;
+			}
 		}
 
 
