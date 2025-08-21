@@ -43,9 +43,9 @@ namespace HermesPOS.Data
 
 			modelBuilder.Entity<SaleItem>()
 				.HasOne(si => si.Product)
-                .WithMany(p => p.SaleItem)        // 👈 σύνδεση με τη συλλογή στο Product
-    .HasForeignKey(si => si.ProductId)
-    .OnDelete(DeleteBehavior.Cascade); // 👈 ενεργοποίηση cascade
+                .WithMany(p => p.SaleItems)        // 👈 σύνδεση με τη συλλογή στο Product
+				.HasForeignKey(si => si.ProductId)
+				.OnDelete(DeleteBehavior.Cascade); // 👈 ενεργοποίηση cascade
 
             // ===== Precision για decimal =====
             modelBuilder.Entity<Product>()

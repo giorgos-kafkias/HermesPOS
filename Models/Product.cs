@@ -35,5 +35,6 @@ namespace HermesPOS.Models
 		public Category Category { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public ICollection<SaleItem> SaleItems { get; set; } = new List<SaleItem>();
     }
 }
