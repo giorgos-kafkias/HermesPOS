@@ -47,6 +47,10 @@ namespace HermesPOS.Data
 				.HasForeignKey(si => si.ProductId)
 				.OnDelete(DeleteBehavior.Cascade); // 👈 ενεργοποίηση cascade
 
+            modelBuilder.Entity<Product>()
+				.Property(p => p.IsActive)
+				.HasDefaultValue(true); // ✅ default στον SQL πίνακα
+
             // ===== Precision για decimal =====
             modelBuilder.Entity<Product>()
                 .Property(p => p.WholesalePrice)

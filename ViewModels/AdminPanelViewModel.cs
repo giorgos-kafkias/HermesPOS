@@ -93,9 +93,11 @@ namespace HermesPOS.ViewModels
 		public ICommand AddSupplierCommand { get; }
 		public ICommand EditSupplierCommand { get; }
 		public ICommand DeleteSupplierCommand { get; }
-		
+        public ICommand ToggleActiveCommand { get; }
 
-		public AdminPanelViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
+
+
+        public AdminPanelViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
 		{
 			_unitOfWork = unitOfWork;
 			_serviceProvider = serviceProvider;
@@ -106,8 +108,9 @@ namespace HermesPOS.ViewModels
 			AddProductCommand = new RelayCommand(AddProduct);
 			EditProductCommand = new RelayCommand(EditProduct, () => SelectedProduct != null);
 			DeleteProductCommand = new RelayCommand(DeleteProduct, () => SelectedProduct != null);
+            ToggleActiveCommand = new RelayCommand(ToggleActive, () => SelectedProduct != null);
 
-			AddCategoryCommand = new RelayCommand(AddCategory);
+            AddCategoryCommand = new RelayCommand(AddCategory);
 			EditCategoryCommand = new RelayCommand(EditCategory, () => SelectedCategory != null);
 			DeleteCategoryCommand = new RelayCommand(DeleteCategory, () => SelectedCategory != null);
 
@@ -180,20 +183,28 @@ namespace HermesPOS.ViewModels
 			LoadData();
 		}
 
-		private async void DeleteProduct()
-		{
-			if (SelectedProduct == null) return;
+        private async void DeleteProduct()
+        {
+            if (SelectedProduct == null) return;
 
-			if (MessageBox.Show($"Θέλετε να διαγράψετε το προϊόν '{SelectedProduct.Name}'?",
-				"Επιβεβαίωση", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-			{
-				await _unitOfWork.Products.DeleteAsync(SelectedProduct.Id);
-				await _unitOfWork.CompleteAsync();
-				await LoadData();
-			}
-		}
+            var confirm = MessageBox.Show(
+                $"Θέλεις ΟΡΙΣΤΙΚΑ να διαγράψεις το προϊόν '{SelectedProduct.Name}' ;\n\n" +
+                $"• Θα διαγραφούν και όλες οι σχετικές γραμμές πώλησης (SaleItems).\n" +
+                $"• Η ενέργεια δεν μπορεί να αναιρεθεί.",
+                "Επιβεβαίωση διαγραφής",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
 
-		private void AddCategory()
+            if (confirm != MessageBoxResult.Yes) return;
+
+            await _unitOfWork.Products.DeleteAsync(SelectedProduct.Id); // θα κάνει cascade στα SaleItems
+            await _unitOfWork.CompleteAsync();
+
+            await LoadData();
+            UpdateCommandStates();
+        }
+
+        private void AddCategory()
 		{
 			var viewModel = _serviceProvider.GetRequiredService<EditCategoryOrSupplierViewModel>();
 			viewModel.Initialize(new Category(), null, async () => await LoadData());
@@ -274,9 +285,25 @@ namespace HermesPOS.ViewModels
 				FilteredProducts.Add(product);
 			}
 		}
+        private async void ToggleActive()
+        {
+            if (SelectedProduct == null) return;
 
+            SelectedProduct.IsActive = !SelectedProduct.IsActive;
+            await _unitOfWork.Products.UpdateAsync(SelectedProduct);
+            await _unitOfWork.CompleteAsync();
 
-		public event PropertyChangedEventHandler PropertyChanged;
+            MessageBox.Show(
+                SelectedProduct.IsActive
+                    ? $"Το προϊόν \"{SelectedProduct.Name}\" ενεργοποιήθηκε."
+                    : $"Το προϊόν \"{SelectedProduct.Name}\" απενεργοποιήθηκε.",
+                "Ενημέρωση", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            await LoadData();
+            UpdateCommandStates();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 		protected void OnPropertyChanged(string propertyName)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

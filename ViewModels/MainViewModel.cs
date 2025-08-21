@@ -219,7 +219,17 @@ namespace HermesPOS.ViewModels
 					return;
 				}
 
-				var existingCartItem = CartItems.FirstOrDefault(c => c.Product.Barcode == ScannedBarcode);
+                // 🚫 Μπλοκάρισμα αν είναι ανενεργό
+                if (!product.IsActive)
+                {
+                    MessageBox.Show(
+                        $"Το προϊόν \"{product.Name}\" είναι ανενεργό και δεν μπορεί να πουληθεί.",
+                        "Ανενεργό προϊόν", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    ScannedBarcode = string.Empty;
+                    return;
+                }
+
+                var existingCartItem = CartItems.FirstOrDefault(c => c.Product.Barcode == ScannedBarcode);
 
 				if (existingCartItem != null)
 				{
