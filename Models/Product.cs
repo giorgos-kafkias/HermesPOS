@@ -27,13 +27,13 @@ namespace HermesPOS.Models
 		// Ξένο κλειδί για Προμηθευτή
 		public int? SupplierId { get; set; }
 
-		[ForeignKey("SupplierId")]
 		public Supplier Supplier { get; set; }
 
 		// Ξένο κλειδί για Κατηγορία
 		public int? CategoryId { get; set; }
 
-		[ForeignKey("CategoryId")]
 		public Category Category { get; set; }
-	}
+
+        public bool IsActive { get; set; } = true;
+    }
 }

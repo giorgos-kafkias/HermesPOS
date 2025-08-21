@@ -25,14 +25,14 @@ namespace HermesPOS.Data
 
 			modelBuilder.Entity<Product>()
 				.HasOne(p => p.Supplier)
-				.WithMany()
-				.HasForeignKey(p => p.SupplierId)
+				.WithMany(s => s.Products)
+                .HasForeignKey(p => p.SupplierId)
 				.OnDelete(DeleteBehavior.SetNull); // ❗
 
 			modelBuilder.Entity<Product>()
 				.HasOne(p => p.Category)
-				.WithMany()
-				.HasForeignKey(p => p.CategoryId)
+				.WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
 				.OnDelete(DeleteBehavior.SetNull); // ❗
 
 			modelBuilder.Entity<SaleItem>()
@@ -43,9 +43,22 @@ namespace HermesPOS.Data
 
 			modelBuilder.Entity<SaleItem>()
 				.HasOne(si => si.Product)
-				.WithMany()
-				.HasForeignKey(si => si.ProductId)
-				.OnDelete(DeleteBehavior.Restrict);
-		}
+                .WithMany(p => p.SaleItem)        // 👈 σύνδεση με τη συλλογή στο Product
+    .HasForeignKey(si => si.ProductId)
+    .OnDelete(DeleteBehavior.Cascade); // 👈 ενεργοποίηση cascade
+
+            // ===== Precision για decimal =====
+            modelBuilder.Entity<Product>()
+                .Property(p => p.WholesalePrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Sale>()
+                .Property(s => s.TotalAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<SaleItem>()
+                .Property(i => i.Price)
+                .HasPrecision(18, 2);
+        }
 	}
 }

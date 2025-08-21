@@ -4,6 +4,7 @@ using HermesPOS.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HermesPOS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250818151857_AddProductIsActive")]
+    partial class AddProductIsActive
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,6 +59,9 @@ namespace HermesPOS.Migrations
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CategoryId1")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -73,15 +79,21 @@ namespace HermesPOS.Migrations
                     b.Property<int?>("SupplierId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SupplierId1")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("WholesalePrice")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("CategoryId1");
+
                     b.HasIndex("SupplierId");
+
+                    b.HasIndex("SupplierId1");
 
                     b.ToTable("Products");
                 });
@@ -98,7 +110,6 @@ namespace HermesPOS.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
@@ -115,7 +126,6 @@ namespace HermesPOS.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("ProductId")
@@ -165,14 +175,22 @@ namespace HermesPOS.Migrations
             modelBuilder.Entity("HermesPOS.Models.Product", b =>
                 {
                     b.HasOne("HermesPOS.Models.Category", "Category")
-                        .WithMany("Products")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("HermesPOS.Models.Supplier", "Supplier")
+                    b.HasOne("HermesPOS.Models.Category", null)
                         .WithMany("Products")
+                        .HasForeignKey("CategoryId1");
+
+                    b.HasOne("HermesPOS.Models.Supplier", "Supplier")
+                        .WithMany()
                         .HasForeignKey("SupplierId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HermesPOS.Models.Supplier", null)
+                        .WithMany("Products")
+                        .HasForeignKey("SupplierId1");
 
                     b.Navigation("Category");
 

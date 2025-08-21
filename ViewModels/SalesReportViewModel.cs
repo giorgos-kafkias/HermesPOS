@@ -96,12 +96,12 @@ namespace HermesPOS.ViewModels
 		{
 			if (sale == null) return;
 
-			var viewModel = _serviceProvider.GetRequiredService<EditSaleViewModel>();
-			var window = new EditSaleWindow(viewModel, sale);
-			window.ShowDialog();
+            var window = _serviceProvider.GetRequiredService<EditSaleWindow>();
+            window.LoadSale(sale);
+            window.ShowDialog();
 
-			// Μετά το κλείσιμο, ανανέωσε τις πωλήσεις
-			_ = LoadSalesAsync();
+            // Μετά το κλείσιμο, ανανέωσε τις πωλήσεις
+            _ = LoadSalesAsync();
 		}
 
 		public async Task OnTabSelected()

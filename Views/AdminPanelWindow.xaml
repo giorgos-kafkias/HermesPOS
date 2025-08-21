@@ -128,6 +128,20 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
                         <Button Content="➕ Προσθήκη" Command="{Binding AddProductCommand}" Width="150" Margin="5"/>
                         <Button Content="✏️ Επεξεργασία" Command="{Binding EditProductCommand}" Width="150" Margin="5"/>
+                        <!-- Απενεργοποίηση/Ενεργοποίηση -->
+                        <Button Command="{Binding ToggleActiveCommand}" Width="150" Margin="5">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Content" Value="⏸️ Απενεργοποίηση"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedProduct.IsActive}" Value="False">
+                                            <Setter Property="Content" Value="▶️ Ενεργοποίηση"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
                         <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteProductCommand}" Width="150" Margin="5"/>
                     </StackPanel>
                 </Grid>
