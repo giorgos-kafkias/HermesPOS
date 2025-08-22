@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;  // για να αναγνωρίζει το TextBox
 
 namespace HermesPOS.Views
 {
@@ -26,5 +27,19 @@ namespace HermesPOS.Views
 
 			this.Close(); // Αν θες να κλείνει το MainWindow
 		}
-	}
+        private void TextBox_EnterCommit(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter) return;
+
+            var tb = (TextBox)sender;
+
+            // 1) Κάνε commit στο binding (ώστε να γραφτεί η νέα τιμή στο ViewModel)
+            tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+
+            // 2) Στείλε το focus πίσω στο πεδίο barcode (ώστε να συνεχίσεις σκανάρισμα)
+            txtBarcodeScanner.Focus();
+
+            e.Handled = true; // μην περάσει πιο κάτω το Enter
+        }
+    }
 }

@@ -8,6 +8,10 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
         <!-- Modern Light Blue Button Style -->
+        <Style x:Key="EnterCommitsTextBox" TargetType="TextBox">
+            <EventSetter Event="PreviewKeyDown" Handler="TextBox_EnterCommit"/>
+        </Style>
+
         <Style TargetType="Button">
             <Setter Property="Background" Value="#42A5F5"/>
             <Setter Property="Foreground" Value="White"/>
@@ -95,7 +99,35 @@
                 </TextBox.InputBindings>
             </TextBox>
             <Button Content="Προσθήκη" Width="100" Command="{Binding AddProductCommand}" Focusable="False"/>
-            <Button Content="Καθαρισμός Καλαθιού" Width="160" Background="#B71C1C" Command="{Binding EmptyCartCommand}" Focusable="False"/>
+            <Button Content="Καθαρισμός Καλαθιού"
+                    Width="160"
+                    Command="{Binding EmptyCartCommand}"
+                    Focusable="False" IsTabStop="False">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="#C62828"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover: λίγο πιο σκούρο κόκκινο -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#A61E1E"/>
+                            </Trigger>
+                            <!-- Pressed: ακόμα πιο σκούρο -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#8B1C1C"/>
+                            </Trigger>
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
         </StackPanel>
 
         <!-- List of Products -->
@@ -109,7 +141,7 @@
                         <GridViewColumn Header="Τιμή (€)" Width="100">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding PriceString, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                    <TextBox Text="{Binding PriceString, UpdateSourceTrigger=PropertyChanged}" Width="80" Style="{StaticResource EnterCommitsTextBox}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -135,7 +167,7 @@
                         <GridViewColumn Header="Ποσότητα" Width="100">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="60" Style="{StaticResource EnterCommitsTextBox}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -167,7 +199,32 @@
                 <TextBlock Text="Σύνολο: " FontSize="18" Margin="10,0"/>
                 <TextBlock Text="{Binding TotalPrice, StringFormat={}{0:N2} €}" Style="{StaticResource TotalText}"/>
             </StackPanel>
-            <Button Content="Ολοκλήρωση Συναλλαγής" Width="220" Height="40" Background="#43A047" Command="{Binding CompleteTransactionCommand}" DockPanel.Dock="Right"/>
+            <Button Content="Ολοκλήρωση Συναλλαγής"
+                    Width="220" Height="40"
+                    Command="{Binding CompleteTransactionCommand}"
+                    Focusable="False" IsTabStop="False">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="6" Background="#43A047">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hover: πιο σκούρο πράσινο -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#2E7D32"/>
+                            </Trigger>
+                            <!-- Pressed: ακόμη πιο σκούρο -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
+                            </Trigger>
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
         </DockPanel>
     </Grid>
 </Window>
