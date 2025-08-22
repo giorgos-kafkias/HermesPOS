@@ -26,7 +26,7 @@ namespace HermesPOS.ViewModels
 
 		public ObservableCollection<CartItem> CartItems { get; set; }
 
-		public string ScannedBarcode
+        public string ScannedBarcode
 		{
 			get => _scannedBarcode;
 			set
@@ -34,13 +34,9 @@ namespace HermesPOS.ViewModels
 				_scannedBarcode = value;
 				OnPropertyChanged(nameof(ScannedBarcode));
 
-				// Κάθε φορά που αλλάζει, κάνε restart το timer
-				_barcodeTimer.Stop();
-				if (!string.IsNullOrWhiteSpace(_scannedBarcode) && _scannedBarcode.Length >= 3)
-				{
-					_barcodeTimer.Start();
-				}
-			}
+                // 🔔 ενημέρωσε το κουμπί ότι άλλαξαν οι προϋποθέσεις
+                ((AsyncRelayCommand)AddProductCommand).RaiseCanExecuteChanged();
+            }
 		}
 
 		public class CartItem : INotifyPropertyChanged
@@ -188,19 +184,6 @@ namespace HermesPOS.ViewModels
 			RemoveProductCommand = new RelayCommand<CartItem>(RemoveProduct);
 			AddProductCommand = new AsyncRelayCommand(AddProductByBarcode, CanManuallyAdd);
 			CompleteTransactionCommand = new AsyncRelayCommand(CompleteTransaction);
-
-			// Αρχικοποίηση timer για το barcode scan
-			_barcodeTimer = new DispatcherTimer
-			{
-				Interval = TimeSpan.FromMilliseconds(80)
-			};
-			_barcodeTimer.Tick += BarcodeTimer_Tick;
-		}
-
-		private async void BarcodeTimer_Tick(object sender, EventArgs e)
-		{
-			_barcodeTimer.Stop();
-			await AddProductByBarcode();
 		}
 
 		public async Task AddProductByBarcode()
