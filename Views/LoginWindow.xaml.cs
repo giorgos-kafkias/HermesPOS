@@ -14,21 +14,33 @@ namespace HermesPOS.Views
 			_serviceProvider = serviceProvider;
 		}
 
-		private void UserLogin_Click(object sender, RoutedEventArgs e)
-		{
-			// Άνοιγμα της εφαρμογής για απλό χρήστη
-			var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
-			var mainWindow = new MainWindow(mainViewModel,_serviceProvider);
-			mainWindow.Show();
-			this.Close(); // Κλείσιμο του παραθύρου σύνδεσης
-		}
+        private void UserLogin_Click(object sender, RoutedEventArgs e)
+        {
+            var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
+            var mainWindow = new MainWindow(mainViewModel, _serviceProvider);
 
-		private void AdminLogin_Click(object sender, RoutedEventArgs e)
-		{
-			//  Άνοιγμα παραθύρου εισαγωγής κωδικού διαχειριστή
-			AdminLoginWindow adminLogin = new AdminLoginWindow(_serviceProvider);
-			adminLogin.ShowDialog(); // Περιμένει να κλείσει το AdminLoginWindow πριν συνεχίσει
-			this.Close();
-		}
-	}
+            // Κάνε το MainWindow κύριο παράθυρο πριν κλείσεις το Login
+            Application.Current.MainWindow = mainWindow;
+            mainWindow.Show();
+
+            this.Close(); // Τώρα δεν θα τερματίσει η εφαρμογή
+        }
+
+        private void AdminLogin_Click(object sender, RoutedEventArgs e)
+        {
+            var adminLogin = new AdminLoginWindow(_serviceProvider)
+            {
+                Owner = this // προαιρετικό, για σωστό modality
+            };
+
+            bool? result = adminLogin.ShowDialog();
+
+            // ΜΟΝΟ αν έγινε επιτυχία (DialogResult == true) κλείνουμε το Login
+            if (result == true)
+            {
+                this.Close();
+            }
+            // Αλλιώς δεν κάνουμε τίποτα: μένουμε στο LoginWindow
+        }
+    }
 }

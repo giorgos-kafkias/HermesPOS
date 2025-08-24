@@ -38,10 +38,14 @@ namespace HermesPOS.Views
 			{
 				var viewModel = _serviceProvider.GetRequiredService<AdminPanelViewModel>();
 				var adminPanel = new AdminPanelWindow(viewModel,_serviceProvider);
-				adminPanel.Show();
+                // Κάνε το AdminPanel το κύριο παράθυρο
+                Application.Current.MainWindow = adminPanel;
+                adminPanel.Show();
 
-				this.Close(); // Κλείσιμο του παραθύρου εισόδου
-			}
+                // Επιστροφή επιτυχίας στο ShowDialog()
+                this.DialogResult = true;
+                this.Close();
+            }
 			else
 			{
 				MessageBox.Show("Λάθος κωδικός! Προσπαθήστε ξανά.", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Error);
