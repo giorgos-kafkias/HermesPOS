@@ -10,11 +10,11 @@ namespace HermesPOS.Models
 
 		[Required]
 		[StringLength(50)]
-		public string Barcode { get; set; } // Barcode προϊόντος (υποχρεωτικό, max 50 χαρακτήρες)
+		public required string Barcode { get; set; } // Barcode προϊόντος (υποχρεωτικό, max 50 χαρακτήρες)
 
 		[Required]
 		[StringLength(100)]
-		public string Name { get; set; } // Όνομα προϊόντος (υποχρεωτικό, max 100 χαρακτήρες)
+		public required string Name { get; set; } // Όνομα προϊόντος (υποχρεωτικό, max 100 χαρακτήρες)
 
 		[Required]
 		[Column(TypeName = "decimal(18,2)")]
