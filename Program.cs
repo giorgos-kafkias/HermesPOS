@@ -49,8 +49,18 @@ namespace HermesPOS
 					services.AddDbContext<ApplicationDbContext>(options =>
 						options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
 
-					// 🔹 Προσθήκη των Repositories
-					services.AddScoped<IProductRepository, ProductRepository>();
+                    // Παίρνουμε το connection string από το appsettings.json (κρυπτογραφημένο)
+                    var encryptedConnectionString = context.Configuration.GetConnectionString("DefaultConnection");
+                    // Το κάνουμε decrypt με τον helper
+                    var decryptedConnectionString = CryptoHelper.Decrypt(encryptedConnectionString);
+
+                    // Το περνάμε στον DbContext
+                    services.AddDbContext<ApplicationDbContext>(options =>
+                        options.UseSqlServer(decryptedConnectionString),
+                        ServiceLifetime.Scoped);
+
+                    // 🔹 Προσθήκη των Repositories
+                    services.AddScoped<IProductRepository, ProductRepository>();
 					services.AddScoped<ICategoryRepository, CategoryRepository>();
 					services.AddScoped<ISupplierRepository, SupplierRepository>();
 					services.AddScoped<ISaleRepository, SaleRepository>();
