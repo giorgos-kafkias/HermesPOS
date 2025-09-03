@@ -7,16 +7,17 @@
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
-        <!-- Modern Light Blue Button Style -->
+        <!-- ENTER commits -->
         <Style x:Key="EnterCommitsTextBox" TargetType="TextBox">
             <EventSetter Event="PreviewKeyDown" Handler="TextBox_EnterCommit"/>
         </Style>
 
+        <!-- Buttons -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="#42A5F5"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Setter Property="Margin" Value="4"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -43,15 +44,15 @@
             </Setter>
         </Style>
 
-        <!-- TextBox Style -->
+        <!-- TextBoxes (γενικά) λίγο πιο μεγάλα -->
         <Style TargetType="TextBox">
-            <Setter Property="Height" Value="34"/>
-            <Setter Property="Padding" Value="6"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Setter Property="Margin" Value="4"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
 
-        <!-- Title Style -->
+        <!-- Τίτλος -->
         <Style x:Key="TitleText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="28"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -60,9 +61,30 @@
             <Setter Property="Margin" Value="20"/>
         </Style>
 
-        <!-- Total Text Style -->
+        <!-- Στυλ για ΚΕΦΑΛΙΔΕΣ GridView (πιο μεγάλα γράμματα) -->
+        <Style TargetType="GridViewColumnHeader">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="6,4"/>
+        </Style>
+
+        <!-- Γραμμές ListView: μεγαλύτερη γραμματοσειρά/ύψος -->
+        <Style x:Key="ProductRowStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="Background" Value="#E3F2FD"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#BBDEFB"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Σύνολο (footer) – πολύ πιο μεγάλο -->
         <Style x:Key="TotalText" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontSize" Value="30"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Foreground" Value="#0D47A1"/>
         </Style>
@@ -79,7 +101,7 @@
 
         <!-- Admin Login -->
         <Button Content="Admin Login"
-                Width="100" Height="30"
+                Width="110" Height="34"
                 Click="OpenAdminLogin_Click"
                 HorizontalAlignment="Left" Grid.Row="0"/>
 
@@ -88,39 +110,33 @@
 
         <!-- Scanner Row -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,10">
-            <TextBlock Text="Σκανάρετε το Barcode:" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock Text="Σκανάρετε το Barcode:" FontSize="18" VerticalAlignment="Center" Margin="0,0,10,0"/>
             <TextBox Name="txtBarcodeScanner"
-             Width="200"
-             Text="{Binding ScannedBarcode, UpdateSourceTrigger=PropertyChanged}"
-             FocusManager.FocusedElement="{Binding RelativeSource={RelativeSource Self}}">
+                     Width="220"
+                     Text="{Binding ScannedBarcode, UpdateSourceTrigger=PropertyChanged}"
+                     FocusManager.FocusedElement="{Binding RelativeSource={RelativeSource Self}}">
                 <TextBox.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding AddProductCommand}" />
                     <KeyBinding Key="Tab"   Command="{Binding AddProductCommand}" />
                 </TextBox.InputBindings>
             </TextBox>
-            <Button Content="Προσθήκη" Width="100" Command="{Binding AddProductCommand}" Focusable="False"/>
+            <Button Content="Προσθήκη" Width="110" Command="{Binding AddProductCommand}" Focusable="False"/>
             <Button Content="Καθαρισμός Καλαθιού"
-                    Width="160"
+                    Width="170"
                     Command="{Binding EmptyCartCommand}"
                     Focusable="False" IsTabStop="False">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="#C62828"
-                                CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"/>
+                        <Border x:Name="border" Background="#C62828" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <!-- Hover: λίγο πιο σκούρο κόκκινο -->
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#A61E1E"/>
                             </Trigger>
-                            <!-- Pressed: ακόμα πιο σκούρο -->
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#8B1C1C"/>
                             </Trigger>
-                            <!-- Disabled -->
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
                             </Trigger>
@@ -132,81 +148,87 @@
 
         <!-- List of Products -->
         <Border Grid.Row="3" Background="White" CornerRadius="10" Padding="10" BorderBrush="#BBDEFB" BorderThickness="1">
-            <ListView ItemsSource="{Binding CartItems}" AlternationCount="2">
-                <!-- Κάνει κάθε γραμμή να απλώνει το περιεχόμενό της -->
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="VerticalContentAlignment" Value="Center"/>
-                        <Setter Property="Background" Value="#E3F2FD"/>
-                        <!-- χρώμα για όλη τη γραμμή -->
-                        <Style.Triggers>
-                            <!-- Όταν επιλέγεται μια γραμμή -->
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#BBDEFB"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListView.ItemContainerStyle>
+            <ListView ItemsSource="{Binding CartItems}" ItemContainerStyle="{StaticResource ProductRowStyle}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Όνομα Προϊόντος" Width="250" DisplayMemberBinding="{Binding Product.Name}" />
-
-                        <!-- Editable Τιμή -->
-                        <GridViewColumn Header="Τιμή (€)" Width="100">
+                        <!-- Όνομα προϊόντος (CellTemplate για έλεγχο μεγέθους γραμματοσειράς) -->
+                        <GridViewColumn Header="Όνομα Προϊόντος" Width="280">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding PriceString, UpdateSourceTrigger=PropertyChanged}" Width="80" TextAlignment="Center" Style="{StaticResource EnterCommitsTextBox}"/>
+                                    <TextBlock Text="{Binding Product.Name}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontSize="16"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <!-- Editable Τιμή -->
+                        <GridViewColumn Header="Τιμή (€)" Width="110">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding PriceString, UpdateSourceTrigger=PropertyChanged}"
+                                             Width="90"
+                                             TextAlignment="Center"
+                                             FontSize="16"
+                                             Style="{StaticResource EnterCommitsTextBox}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
                         <!-- Χονδρική Τιμή -->
-                        <GridViewColumn Header="Χονδρική" Width="140">
+                        <GridViewColumn Header="Χονδρική" Width="160">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <CheckBox IsChecked="{Binding UseWholesalePrice, Mode=TwoWay}"
-                                  Visibility="{Binding HasWholesaleOption, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                  VerticalAlignment="Center"
+                                                  Visibility="{Binding HasWholesaleOption, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                         <TextBlock Text="{Binding WholesalePriceDisplay}"
-                                   Margin="5,0,0,0"
-                                   VerticalAlignment="Center"
-                                   Foreground="Gray"
-                                   FontSize="12"
-                                   TextAlignment="Center"/>
+                                                   Margin="8,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="Gray"
+                                                   FontSize="14"
+                                                   TextAlignment="Center"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
                         <!-- Ποσότητα -->
-                        <GridViewColumn Header="Ποσότητα" Width="100">
+                        <GridViewColumn Header="Ποσότητα" Width="110">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="60" TextAlignment="Center" Style="{StaticResource EnterCommitsTextBox}"/>
+                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                             Width="70"
+                                             TextAlignment="Center"
+                                             FontSize="16"
+                                             Style="{StaticResource EnterCommitsTextBox}"/>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
                         <!-- Σύνολο -->
-                        <GridViewColumn Header="Σύνολο (€)" Width="120">
+                        <GridViewColumn Header="Σύνολο (€)" Width="140">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid HorizontalAlignment="Stretch">
-                                        <TextBlock Text="{Binding TotalPrice, StringFormat={}{0:N2}}" 
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextAlignment="Center"/>
+                                        <TextBlock Text="{Binding TotalPrice, StringFormat={}{0:N2}}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   TextAlignment="Center"
+                                                   FontSize="18"
+                                                   FontWeight="SemiBold"/>
                                     </Grid>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
                         <!-- Διαγραφή -->
-                        <GridViewColumn Header="Διαγραφή" Width="80">
+                        <GridViewColumn Header="Διαγραφή" Width="90">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="❌" Width="30" Height="30"
+                                    <Button Content="❌" Width="34" Height="34"
                                             HorizontalAlignment="Center"
                                             Command="{Binding DataContext.RemoveProductCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"/>
@@ -215,19 +237,18 @@
                         </GridViewColumn>
                     </GridView>
                 </ListView.View>
-
-
             </ListView>
         </Border>
 
         <!-- Footer -->
-        <DockPanel Grid.Row="4" Margin="0,10">
+        <DockPanel Grid.Row="4" Margin="0,12">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                <TextBlock Text="Σύνολο: " FontSize="18" Margin="10,0"/>
+                <TextBlock Text="Σύνολο: " FontSize="22" Margin="10,0"/>
+                <!-- ΠΟΛΥ ΜΕΓΑΛΟ τελικό ποσό -->
                 <TextBlock Text="{Binding TotalPrice, StringFormat={}{0:N2} €}" Style="{StaticResource TotalText}"/>
             </StackPanel>
             <Button Content="Ολοκλήρωση Συναλλαγής"
-                    Width="220" Height="40"
+                    Width="240" Height="44"
                     Command="{Binding CompleteTransactionCommand}"
                     Focusable="False" IsTabStop="False">
                 <Button.Template>
@@ -236,15 +257,12 @@
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <!-- Hover: πιο σκούρο πράσινο -->
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#2E7D32"/>
                             </Trigger>
-                            <!-- Pressed: ακόμη πιο σκούρο -->
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="border" Property="Background" Value="#1B5E20"/>
                             </Trigger>
-                            <!-- Disabled -->
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
                             </Trigger>
