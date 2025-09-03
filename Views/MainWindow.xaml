@@ -132,12 +132,20 @@
 
         <!-- List of Products -->
         <Border Grid.Row="3" Background="White" CornerRadius="10" Padding="10" BorderBrush="#BBDEFB" BorderThickness="1">
-            <ListView ItemsSource="{Binding CartItems}">
+            <ListView ItemsSource="{Binding CartItems}" AlternationCount="2">
                 <!-- Κάνει κάθε γραμμή να απλώνει το περιεχόμενό της -->
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="Background" Value="#E3F2FD"/>
+                        <!-- χρώμα για όλη τη γραμμή -->
+                        <Style.Triggers>
+                            <!-- Όταν επιλέγεται μια γραμμή -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#BBDEFB"/>
+                            </Trigger>
+                        </Style.Triggers>
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.View>
