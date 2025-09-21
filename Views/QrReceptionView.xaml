@@ -8,23 +8,36 @@
 
     <DockPanel LastChildFill="True" Margin="10" >
         <!-- ΠΑΝΩ: QR URL + Εισαγωγή -->
+        <!-- ΠΑΝΩ: Προμηθευτής + QR URL + Εισαγωγή -->
         <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="240"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- ΧΩΡΙΣ fixed Width -->
-            <TextBox Grid.Column="0"
-                 MinWidth="200"
-                 HorizontalAlignment="Stretch"
-                 Text="{Binding QrUrl, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Text="Προμηθευτής:" VerticalAlignment="Center" Margin="0,0,6,0"/>
 
-            <Button Grid.Column="1"
-                Content="Εισαγωγή"
-                Command="{Binding ImportFromQrCommand}"
-                Margin="8,0,0,0" />
+            <ComboBox Grid.Column="1"
+              ItemsSource="{Binding Suppliers}"
+              DisplayMemberPath="Name"
+              SelectedValuePath="Id"
+              SelectedValue="{Binding SupplierId, Mode=TwoWay}"
+              MinWidth="220"/>
+
+            <TextBox Grid.Column="2"
+             Margin="12,0,0,0"
+             MinWidth="200"
+             HorizontalAlignment="Stretch"
+             Text="{Binding QrUrl, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <Button Grid.Column="3"
+            Content="Εισαγωγή"
+            Command="{Binding ImportFromQrCommand}"
+            Margin="8,0,0,0"/>
         </Grid>
+
 
         <!-- ΚΑΤΩ: κουμπιά -->
         <StackPanel DockPanel.Dock="Bottom"

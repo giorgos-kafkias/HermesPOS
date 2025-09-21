@@ -67,6 +67,27 @@ namespace HermesPOS.Data
             modelBuilder.Entity<SaleItem>()
                 .Property(i => i.Price)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<StockReception>(e =>
+            {
+                e.Property(r => r.Mark).IsRequired().HasMaxLength(50);
+                e.HasIndex(r => r.Mark).IsUnique();
+
+                // enum → int + default + not null
+                e.Property(r => r.Status)
+                    .HasConversion<int>()
+                    .HasDefaultValue(ReceptionStatus.Draft)
+                    .IsRequired();
+
+                e.HasMany(r => r.Items)
+                    .WithOne(i => i.StockReception)
+                    .HasForeignKey(i => i.StockReceptionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            //// StockReceptionItem (προαιρετικά) index για γρήγορα queries
+            //modelBuilder.Entity<StockReceptionItem>().HasIndex(i => i.StockReceptionId);
+            //modelBuilder.Entity<StockReceptionItem>().HasIndex(i => i.Barcode).HasFilter("[Barcode] IS NOT NULL");
         }
 	}
 }

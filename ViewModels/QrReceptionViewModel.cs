@@ -1,16 +1,21 @@
-﻿using HermesPOS.Models;
+﻿using HermesPOS.Data.Repositories;
+using HermesPOS.Models;
+using HermesPOS.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using HermesPOS.Data.Repositories;
+using System.Threading.Tasks;
 
 namespace HermesPOS.ViewModels
 {
-    public class QrReceptionViewModel
+    public class QrReceptionViewModel : INotifyPropertyChanged
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IStockReceptionService _receptionService;
+        public ObservableCollection<Supplier> Suppliers { get; } = new();
 
         // Κρατάμε το Draft που δημιουργήθηκε με "Αποθήκευση"
         private int? _currentReceptionId;
@@ -20,7 +25,19 @@ namespace HermesPOS.ViewModels
         public ObservableCollection<StockReceptionItem> Items { get; } = new();
 
         // Header (UI)
-        public int SupplierId { get; set; }
+        private int _supplierId;
+        public int SupplierId
+        {
+            get => _supplierId;
+            set
+            {
+                if (_supplierId != value)
+                {
+                    _supplierId = value;
+                    OnPropertyChanged(nameof(SupplierId)); // 👈 ενημερώνει το ComboBox
+                }
+            }
+        }
         public string? QrUrl { get; set; }
 
         // Εντολές
@@ -28,9 +45,10 @@ namespace HermesPOS.ViewModels
         public ICommand SaveMappingsCommand { get; }
         public ICommand PostReceptionCommand { get; }
 
-        public QrReceptionViewModel(IUnitOfWork unitOfWork)
+        public QrReceptionViewModel(IUnitOfWork unitOfWork, IStockReceptionService receptionService)
         {
             _unitOfWork = unitOfWork;
+            _receptionService = receptionService;
 
             ImportFromQrCommand = new RelayCommand(ImportFromQr);
             SaveMappingsCommand = new RelayCommand(SaveMappings);
@@ -38,31 +56,53 @@ namespace HermesPOS.ViewModels
             PostReceptionCommand = new RelayCommand(PostReception, () => _currentReceptionId.HasValue);
         }
 
-        private void ImportFromQr()
+        public async Task EnsureSuppliersLoadedAsync()
         {
-            // Νέα εισαγωγή → ακυρώνουμε τυχόν προηγούμενο Draft στο UI
+            if (Suppliers.Count > 0) return; // φόρτωσες ήδη
+            await LoadSuppliersAsync();
+        }
+
+        private async void ImportFromQr()
+        {
+            // Ασφάλεια: καθάρισε τρέχον draft στο UI
             _currentReceptionId = null;
             _currentMark = null;
             ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
 
-            Items.Clear();
-            Items.Add(new StockReceptionItem
-            {
-                SupplierCode = "ABC123",
-                Description = "Δείγμα προϊόν",
-                Quantity = 10,
-                Barcode = "842"
-            });
+            var url = (QrUrl ?? "").Trim();
+            var (ok, message, items, supplierId) = await _receptionService.FetchFromQrUrlAsync(url);
 
-            Items.Add(new StockReceptionItem
+            if (!ok)
             {
-                SupplierCode = "XYZ999",
-                Description = "Δείγμα προϊόν 2",
-                Quantity = 5,
-                Barcode = ""
-            });
+                MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Γέμισμα γραμμών
+            Items.Clear();
+            foreach (var it in items) Items.Add(it);
+
+            // Αν το service κατάφερε να αναγνωρίσει προμηθευτή, τον ορίζουμε
+            if (supplierId.HasValue) SupplierId = supplierId.Value;
+
+            // Προαιρετικό info (π.χ. για MARK)
+            if (!string.IsNullOrEmpty(message))
+                MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        private async Task LoadSuppliersAsync()
+        {
+            var list = await _unitOfWork.Suppliers.GetAllAsync();
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                Suppliers.Clear();
+                foreach (var s in list) Suppliers.Add(s);
+
+                // Αν δεν έχει επιλεγεί supplier, βάλε τον πρώτο διαθέσιμο
+                if (SupplierId <= 0 && Suppliers.Any())
+                    SupplierId = Suppliers.First().Id;
+            });
+        }
         private async void SaveMappings()
         {
             // 1) Διπλά barcodes σε διαφορετικούς SupplierCodes → μπλοκάρουμε
@@ -110,7 +150,21 @@ namespace HermesPOS.ViewModels
                     "Προειδοποίηση", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
-            var supplierId = SupplierId > 0 ? SupplierId : 1;
+            // 🔹 Βρες ΕΓΚΥΡΟ SupplierId από τη βάση (όχι σκληροκώδικα)
+            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
+            if (suppliers == null || !suppliers.Any())
+            {
+                MessageBox.Show("Δεν υπάρχει καταχωρημένος προμηθευτής στη βάση. Δημιούργησε έναν πρώτα.",
+                    "Αποθήκευση", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            int supplierId = SupplierId;
+            if (!suppliers.Any(s => s.Id == supplierId))
+            {
+                supplierId = suppliers.First().Id; // πάρε έναν υπαρκτό (π.χ. 17/20)
+                SupplierId = supplierId;           // κράτα τον για τα επόμενα saves/post
+            }
 
             try
             {
@@ -125,9 +179,9 @@ namespace HermesPOS.ViewModels
                         return;
                     }
 
-                    // ΔΕΝ αλλάζουμε το MARK — μένει σταθερό
                     rec.SupplierId = supplierId;
                     rec.ReceptionDate = DateTime.Now;
+                    rec.Status = ReceptionStatus.Draft; // ασφάλεια
 
                     rec.Items.Clear();
                     foreach (var i in Items)
@@ -150,7 +204,6 @@ namespace HermesPOS.ViewModels
                 else
                 {
                     // -------- ΔΗΜΙΟΥΡΓΙΑ ΝΕΟΥ DRAFT --------
-                    // (αν έχεις πραγματικό MARK από QR, βάλ’ το εδώ αντί για DEV-....)
                     var mark = "DEV-" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
                     var exists = await _unitOfWork.StockReceptions.ExistsByMarkAsync(mark);
@@ -180,11 +233,9 @@ namespace HermesPOS.ViewModels
                         });
                     }
 
-                    // ⬇️ AddDraftAsync ΕΠΙΣΤΡΕΦΕΙ StockReception (ΟΧΙ int)
                     var rec = await _unitOfWork.StockReceptions.AddDraftAsync(reception);
                     await _unitOfWork.CompleteAsync();
 
-                    // ✅ Κρατάμε Id/Mark για επόμενα Save & Post
                     _currentReceptionId = rec.Id;
                     _currentMark = rec.Mark;
                     ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
@@ -195,10 +246,13 @@ namespace HermesPOS.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Σφάλμα κατά την αποθήκευση:\n" + ex.Message,
+                var baseMsg = ex.GetBaseException().Message;
+                MessageBox.Show(
+                    $"Σφάλμα κατά την αποθήκευση:\n{baseMsg}\n\n{ex}",
                     "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private async void PostReception()
         {
@@ -209,7 +263,7 @@ namespace HermesPOS.ViewModels
                 return;
             }
 
-            var (ok, message) = await _unitOfWork.PostReceptionAsync(_currentReceptionId.Value);
+            var (ok, message) = await _receptionService.PostReceptionAsync(_currentReceptionId.Value);
 
             MessageBox.Show(message,
                 ok ? "Ολοκλήρωση" : "Αποτυχία",
@@ -225,6 +279,7 @@ namespace HermesPOS.ViewModels
                 ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
             }
         }
-
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

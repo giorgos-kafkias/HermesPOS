@@ -64,37 +64,35 @@ namespace HermesPOS.Views
 		{
 			MessageBox.Show("Διαγραφή προμηθευτή (Θα προστεθεί).", "Διαχείριση Προμηθευτών");
 		}
+        private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source is TabControl tabControl &&
+                tabControl.SelectedItem is TabItem selectedTab &&
+                DataContext is AdminPanelViewModel vm)
+            {
+                var header = selectedTab.Header?.ToString() ?? string.Empty;
 
-		private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			if (e.Source is TabControl tabControl)
-			{
-				var selectedTab = tabControl.SelectedItem as TabItem;
-				if (selectedTab != null && selectedTab.Header.ToString() == "🔥 Bestseller Προϊόντα")
-				{
-					if (DataContext is AdminPanelViewModel viewModel)
-					{
-						await viewModel.BestsellerViewModel.OnTabSelected();
-					}
-				}
-				else if (selectedTab.Header.ToString() == "📈 Αναφορά Πωλήσεων")
-				{
-					if (DataContext is AdminPanelViewModel viewModel)
-					{
-						await viewModel.SalesReportViewModel.OnTabSelected();
-					}
-				}
-				else if (selectedTab.Header.ToString() == "📉 Χαμηλό Απόθεμα")
-				{
-					if (DataContext is AdminPanelViewModel viewModel)
-					{
-						await viewModel.LowStockViewModel.OnTabSelected();
-					}
-				}
-				
-			}
-		}
-		private void OpenAdminLogin_Click(object sender, RoutedEventArgs e)
+                if (header.Contains("Bestseller"))
+                {
+                    await vm.BestsellerViewModel.OnTabSelected();
+                }
+                else if (header.Contains("Αναφορά Πωλήσεων"))
+                {
+                    await vm.SalesReportViewModel.OnTabSelected();
+                }
+                else if (header.Contains("Χαμηλό Απόθεμα"))
+                {
+                    await vm.LowStockViewModel.OnTabSelected();
+                }
+                else if (header.Contains("QR") || header.Contains("Παραλαβή από QR"))
+                {
+                    // 👉 εδώ φορτώνουμε τους suppliers ΜΟΝΟ όταν ανοιχτεί η καρτέλα QR
+                    await vm.QrReceptionViewModel.EnsureSuppliersLoadedAsync();
+                }
+            }
+        }
+
+        private void OpenAdminLogin_Click(object sender, RoutedEventArgs e)
 		{
 			var loginWindow = new LoginWindow(_serviceProvider);
 			loginWindow.Show();

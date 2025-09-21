@@ -11,7 +11,6 @@ namespace HermesPOS.Data.Repositories
 		ISaleRepository Sales { get; } // Διαχείριση πωλησεων
         IStockReceptionRepository StockReceptions { get; }
         Task<int> CompleteAsync(); // Αποθήκευση αλλαγών στη βάση
-        Task<(bool Ok, string Message)> PostReceptionAsync(int receptionId);
     }
 }
 

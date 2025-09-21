@@ -60,8 +60,8 @@ namespace HermesPOS
                     services.AddScoped<IStockReceptionRepository, StockReceptionRepository>();
                     services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-					// 🔹 Προσθήκη των ViewModels
-					services.AddTransient<MainViewModel>();
+                    // 🔹 Προσθήκη των ViewModels
+                    services.AddTransient<MainViewModel>();
 					services.AddTransient<LowStockProductsViewModel>();
 					services.AddTransient<ReceiveStockViewModel>();
 					services.AddTransient<AddProductViewModel>();
@@ -71,7 +71,7 @@ namespace HermesPOS
 					services.AddTransient<BestsellerViewModel>();
 					services.AddTransient<SalesReportViewModel>();
 					services.AddTransient<EditSaleViewModel>();
-                    services.AddSingleton<QrReceptionViewModel>();
+                    services.AddTransient<QrReceptionViewModel>();
 
                     // 🔹 Προσθήκη των Views
                     services.AddScoped<MainWindow>();
@@ -84,7 +84,7 @@ namespace HermesPOS
 					services.AddScoped<EditProductWindow>();
 					services.AddScoped<EditCategoryOrSupplierView>();
 					services.AddScoped< EditSaleWindow>();
-                    services.AddScoped<QrReceptionService>();
+                    services.AddHttpClient<IStockReceptionService, StockReceptionService>();
                 });
 		}	
 	}
