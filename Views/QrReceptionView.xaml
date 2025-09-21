@@ -6,38 +6,48 @@
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="800">
 
-    <Grid>
-        <!-- Πεδίο για το QR URL -->
-        <StackPanel Orientation="Horizontal" Margin="10">
-            <TextBox Width="777"
-                     Text="{Binding QrUrl, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Εισαγωγή"
-                    Command="{Binding ImportFromQrCommand}"
-                    Margin="5,0,0,0" />
+    <DockPanel LastChildFill="True" Margin="10" >
+        <!-- ΠΑΝΩ: QR URL + Εισαγωγή -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ΧΩΡΙΣ fixed Width -->
+            <TextBox Grid.Column="0"
+                 MinWidth="200"
+                 HorizontalAlignment="Stretch"
+                 Text="{Binding QrUrl, UpdateSourceTrigger=PropertyChanged}" />
+
+            <Button Grid.Column="1"
+                Content="Εισαγωγή"
+                Command="{Binding ImportFromQrCommand}"
+                Margin="8,0,0,0" />
+        </Grid>
+
+        <!-- ΚΑΤΩ: κουμπιά -->
+        <StackPanel DockPanel.Dock="Bottom"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                Margin="0,10,0,0">
+            <Button Content="Αποθήκευση"
+                Command="{Binding SaveMappingsCommand}"
+                Margin="0,0,8,0"/>
+            <Button Content="Ολοκλήρωση (Post)"
+                Command="{Binding PostReceptionCommand}" />
         </StackPanel>
 
-        <!-- DataGrid για γραμμές τιμολογίου -->
+        <!-- ΚΕΝΤΡΟ: DataGrid (γεμίζει τον χώρο, έχει δικό του scroll) -->
         <DataGrid ItemsSource="{Binding Items}"
-                  AutoGenerateColumns="False"
-                  Margin="10,50,10,50">
+              AutoGenerateColumns="False"
+              CanUserAddRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="SupplierCode" Binding="{Binding SupplierCode}" />
-                <DataGridTextColumn Header="Περιγραφή" Binding="{Binding Description}" />
-                <DataGridTextColumn Header="Ποσότητα" Binding="{Binding Quantity}" />
+                <DataGridTextColumn Header="Περιγραφή"    Binding="{Binding Description}" />
+                <DataGridTextColumn Header="Ποσότητα"     Binding="{Binding Quantity}" />
                 <DataGridTextColumn Header="Barcode Προϊόντος" Binding="{Binding Barcode}" />
             </DataGrid.Columns>
         </DataGrid>
-
-        <!-- Κουμπιά Save / Post -->
-        <StackPanel Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Margin="10">
-            <Button Content="Αποθήκευση"
-                    Command="{Binding SaveMappingsCommand}"
-                    Margin="0,0,5,0"/>
-            <Button Content="Ολοκλήρωση (Post)"
-                    Command="{Binding PostReceptionCommand}" />
-        </StackPanel>
-    </Grid>
+    </DockPanel>
 </UserControl>

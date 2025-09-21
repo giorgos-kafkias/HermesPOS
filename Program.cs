@@ -1,13 +1,14 @@
-﻿using System;
-using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
-using HermesPOS.Data;
+﻿using HermesPOS.Data;
 using HermesPOS.Data.Repositories;
+using HermesPOS.Services;
 using HermesPOS.ViewModels;
 using HermesPOS.Views;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Windows;
 
 namespace HermesPOS
 {
@@ -45,26 +46,19 @@ namespace HermesPOS
 			return Host.CreateDefaultBuilder()
 				.ConfigureServices((context, services) =>
 				{
-					// 🔹 Προσθήκη της βάσης δεδομένων από το appsettings.json
-					services.AddDbContext<ApplicationDbContext>(options =>
-						options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Scoped);
+                    var conn = context.Configuration.GetConnectionString("DefaultConnection")
+                               ?? throw new InvalidOperationException("Missing DefaultConnection");
 
-					// Παίρνουμε το connection string από το appsettings.json (κρυπτογραφημένο)
-					var encryptedConnectionString = context.Configuration.GetConnectionString("DefaultConnection");
-					// Το κάνουμε decrypt με τον helper
-					var decryptedConnectionString = CryptoHelper.Decrypt(encryptedConnectionString);
-				
-                    // Το περνάμε στον DbContext
                     services.AddDbContext<ApplicationDbContext>(options =>
-						options.UseSqlServer(decryptedConnectionString),
-						ServiceLifetime.Scoped);
-
-					// 🔹 Προσθήκη των Repositories
-					services.AddScoped<IProductRepository, ProductRepository>();
+                        options.UseSqlServer(conn),
+                        ServiceLifetime.Scoped);
+                    // 🔹 Προσθήκη των Repositories
+                    services.AddScoped<IProductRepository, ProductRepository>();
 					services.AddScoped<ICategoryRepository, CategoryRepository>();
 					services.AddScoped<ISupplierRepository, SupplierRepository>();
 					services.AddScoped<ISaleRepository, SaleRepository>();
-					services.AddScoped<IUnitOfWork, UnitOfWork>();
+                    services.AddScoped<IStockReceptionRepository, StockReceptionRepository>();
+                    services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 					// 🔹 Προσθήκη των ViewModels
 					services.AddTransient<MainViewModel>();
@@ -77,9 +71,10 @@ namespace HermesPOS
 					services.AddTransient<BestsellerViewModel>();
 					services.AddTransient<SalesReportViewModel>();
 					services.AddTransient<EditSaleViewModel>();
+                    services.AddSingleton<QrReceptionViewModel>();
 
-					// 🔹 Προσθήκη των Views
-					services.AddScoped<MainWindow>();
+                    // 🔹 Προσθήκη των Views
+                    services.AddScoped<MainWindow>();
 					services.AddScoped<LowStockProductsTab>();
 					services.AddScoped<ReceiveStockTab>();
 					services.AddScoped<AddProductView>();
@@ -89,7 +84,8 @@ namespace HermesPOS
 					services.AddScoped<EditProductWindow>();
 					services.AddScoped<EditCategoryOrSupplierView>();
 					services.AddScoped< EditSaleWindow>();
-				});
+                    services.AddScoped<QrReceptionService>();
+                });
 		}	
 	}
 }

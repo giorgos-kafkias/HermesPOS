@@ -21,7 +21,6 @@ namespace HermesPOS.Views
         public QrReceptionView()
         {
             InitializeComponent();
-            DataContext = new QrReceptionViewModel();
         }
     }
 }

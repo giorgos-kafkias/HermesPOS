@@ -27,7 +27,7 @@ namespace HermesPOS.ViewModels
 		public ReceiveStockViewModel ReceiveStockViewModel { get; }
 		public LowStockProductsViewModel LowStockViewModel { get; }
 
-        public QrReceptionViewModel QrReceptionViewModel { get; } = new QrReceptionViewModel();
+        public QrReceptionViewModel QrReceptionViewModel { get; }
 
 
 
@@ -125,7 +125,8 @@ namespace HermesPOS.ViewModels
 
 			LowStockViewModel = serviceProvider.GetRequiredService<LowStockProductsViewModel>();
 			ReceiveStockViewModel = serviceProvider.GetRequiredService<ReceiveStockViewModel>();
-		}
+            QrReceptionViewModel = _serviceProvider.GetRequiredService<QrReceptionViewModel>();
+        }
 
 		private async Task LoadData()
 		{

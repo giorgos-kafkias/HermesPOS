@@ -9,6 +9,9 @@ namespace HermesPOS.Data.Repositories
 		ICategoryRepository Categories { get; } // Διαχείριση κατηγοριών
 		ISupplierRepository Suppliers { get; } // Διαχείριση προμηθευτών
 		ISaleRepository Sales { get; } // Διαχείριση πωλησεων
-		Task<int> CompleteAsync(); // Αποθήκευση αλλαγών στη βάση
-	}
+        IStockReceptionRepository StockReceptions { get; }
+        Task<int> CompleteAsync(); // Αποθήκευση αλλαγών στη βάση
+        Task<(bool Ok, string Message)> PostReceptionAsync(int receptionId);
+    }
 }
+
