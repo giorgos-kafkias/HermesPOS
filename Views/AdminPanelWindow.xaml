@@ -345,6 +345,10 @@
             <TabItem Header="📥 Παραλαβή Προϊόντων">
                 <views:ReceiveStockTab DataContext="{Binding ReceiveStockViewModel}" />
             </TabItem>
+            <TabItem Header="📄 Παραλαβή από QR">
+                <views:QrReceptionView DataContext="{Binding QrReceptionViewModel}" />
+            </TabItem>
+
 
 
         </TabControl>

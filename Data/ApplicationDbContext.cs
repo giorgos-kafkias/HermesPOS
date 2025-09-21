@@ -17,9 +17,13 @@ namespace HermesPOS.Data
 		public DbSet<Category> Categories { get; set; }
 		public DbSet<Sale> Sales { get; set; }
 		public DbSet<SaleItem> SaleItems { get; set; }
+        public DbSet<StockReception> StockReceptions { get; set; }
+        public DbSet<StockReceptionItem> StockReceptionItems { get; set; }
+        public DbSet<SupplierProductMap> SupplierProductMaps { get; set; }
 
 
-		protected override void OnModelCreating(ModelBuilder modelBuilder)
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
 

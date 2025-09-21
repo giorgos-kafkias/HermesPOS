@@ -1,12 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HermesPOS.Models
 {
-    internal class StockReception
+    public class StockReception
     {
+        public int Id { get; set; }
+        public int SupplierId { get; set; }
+        public DateTime ReceptionDate { get; set; }
+        public string Mark { get; set; } = string.Empty; // μοναδικό MARK από ΑΑΔΕ
+        public ReceptionStatus Status { get; set; }
+
+        public ICollection<StockReceptionItem> Items { get; set; } = new List<StockReceptionItem>();
+    }
+
+    public enum ReceptionStatus
+    {
+        Draft = 0,
+        Posted = 1
     }
 }

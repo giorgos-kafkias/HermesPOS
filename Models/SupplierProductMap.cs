@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace HermesPOS.Models
 {
-    internal class SupplierProductMap
+    public class SupplierProductMap
     {
+        public int Id { get; set; }
+        public int SupplierId { get; set; }
+        public string SupplierCode { get; set; } = string.Empty;
+        public int ProductId { get; set; }
     }
 }
+

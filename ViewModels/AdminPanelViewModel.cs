@@ -27,9 +27,12 @@ namespace HermesPOS.ViewModels
 		public ReceiveStockViewModel ReceiveStockViewModel { get; }
 		public LowStockProductsViewModel LowStockViewModel { get; }
 
+        public QrReceptionViewModel QrReceptionViewModel { get; } = new QrReceptionViewModel();
 
-		// 🔹 Επιλεγμένα Στοιχεία
-		private Product _selectedProduct;
+
+
+        // 🔹 Επιλεγμένα Στοιχεία
+        private Product _selectedProduct;
 		public Product SelectedProduct
 		{
 			get => _selectedProduct;
