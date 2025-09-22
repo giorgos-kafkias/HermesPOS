@@ -128,7 +128,6 @@ namespace HermesPOS.Services
                 return (false, $"HTTP {(int)resp.StatusCode}: δεν μπόρεσα να διαβάσω τη σελίδα της ΑΑΔΕ.", items, null);
 
             var html = await resp.Content.ReadAsStringAsync();
-            System.IO.File.WriteAllText("last_aade.html", html, Encoding.UTF8); // debug
             if (string.IsNullOrWhiteSpace(html))
                 return (false, "Κενή απάντηση από την ΑΑΔΕ.", items, null);
 
@@ -138,14 +137,6 @@ namespace HermesPOS.Services
 
             // MARK + Προμηθευτής
             string? mark = doc.GetElementbyId("tmark")?.InnerText?.Trim();
-            string? supplierName = doc.GetElementbyId("bname")?.InnerText?.Trim();
-            if (!string.IsNullOrWhiteSpace(supplierName))
-            {
-                var all = await _uow.Suppliers.GetAllAsync();
-                var sup = all.FirstOrDefault(s =>
-                    string.Equals(s.Name?.Trim(), supplierName.Trim(), StringComparison.OrdinalIgnoreCase));
-                if (sup != null) supplierId = sup.Id;
-            }
 
             // Βρες τον πίνακα γραμμών
             HtmlNode? table = doc.GetElementbyId("tableDiakinisis");

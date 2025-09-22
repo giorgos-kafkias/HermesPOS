@@ -5,9 +5,9 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Threading.Tasks;
 
 namespace HermesPOS.ViewModels
 {
@@ -15,16 +15,17 @@ namespace HermesPOS.ViewModels
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IStockReceptionService _receptionService;
+
         public ObservableCollection<Supplier> Suppliers { get; } = new();
 
-        // Κρατάμε το Draft που δημιουργήθηκε με "Αποθήκευση"
+        // Τρέχον draft
         private int? _currentReceptionId;
         private string? _currentMark;
 
-        // Γραμμές παραλαβής (UI)
+        // Γραμμές UI
         public ObservableCollection<StockReceptionItem> Items { get; } = new();
 
-        // Header (UI)
+        // Header UI
         private int _supplierId;
         public int SupplierId
         {
@@ -34,13 +35,20 @@ namespace HermesPOS.ViewModels
                 if (_supplierId != value)
                 {
                     _supplierId = value;
-                    OnPropertyChanged(nameof(SupplierId)); // 👈 ενημερώνει το ComboBox
+                    OnPropertyChanged(nameof(SupplierId));
+                    OnPropertyChanged(nameof(HasValidSupplier));
+                    // enable/disable Save/Post ανάλογα
+                    ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
+                    ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
                 }
             }
         }
+
+        public bool HasValidSupplier => SupplierId > 0 && Suppliers.Any(s => s.Id == SupplierId);
+
         public string? QrUrl { get; set; }
 
-        // Εντολές
+        // Commands
         public ICommand ImportFromQrCommand { get; }
         public ICommand SaveMappingsCommand { get; }
         public ICommand PostReceptionCommand { get; }
@@ -51,26 +59,52 @@ namespace HermesPOS.ViewModels
             _receptionService = receptionService;
 
             ImportFromQrCommand = new RelayCommand(ImportFromQr);
-            SaveMappingsCommand = new RelayCommand(SaveMappings);
-            // Το Post ενεργοποιείται ΜΟΝΟ όταν υπάρχει Draft (μετά από Save)
-            PostReceptionCommand = new RelayCommand(PostReception, () => _currentReceptionId.HasValue);
-        }
+            SaveMappingsCommand = new RelayCommand(SaveMappings, () => HasValidSupplier && Items.Any());
+            PostReceptionCommand = new RelayCommand(PostReception, () => _currentReceptionId.HasValue && HasValidSupplier);
 
+            _ = LoadSuppliersAsync(); // δεν προεπιλέγουμε — ο χρήστης διαλέγει
+        }
         public async Task EnsureSuppliersLoadedAsync()
         {
-            if (Suppliers.Count > 0) return; // φόρτωσες ήδη
-            await LoadSuppliersAsync();
+            if (Suppliers.Count > 0) return;
+
+            var list = await _unitOfWork.Suppliers.GetAllAsync();
+
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                Suppliers.Clear();
+                foreach (var s in list) Suppliers.Add(s);
+
+                // αν δεν έχει οριστεί SupplierId, βάλε τον πρώτο διαθέσιμο
+                if (SupplierId <= 0 && Suppliers.Any())
+                    SupplierId = Suppliers.First().Id;
+            });
+        }
+
+        private async Task LoadSuppliersAsync()
+        {
+            var list = await _unitOfWork.Suppliers.GetAllAsync();
+
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                Suppliers.Clear();
+                foreach (var s in list) Suppliers.Add(s);
+
+                // ΔΕΝ προεπιλέγουμε — περιμένουμε επιλογή από το dropdown
+                ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
+            });
         }
 
         private async void ImportFromQr()
         {
-            // Ασφάλεια: καθάρισε τρέχον draft στο UI
+            // reset draft state
             _currentReceptionId = null;
             _currentMark = null;
             ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
 
             var url = (QrUrl ?? "").Trim();
-            var (ok, message, items, supplierId) = await _receptionService.FetchFromQrUrlAsync(url);
+            var (ok, message, items, _) = await _receptionService.FetchFromQrUrlAsync(url);
 
             if (!ok)
             {
@@ -78,38 +112,31 @@ namespace HermesPOS.ViewModels
                 return;
             }
 
-            // Γέμισμα γραμμών
             Items.Clear();
             foreach (var it in items) Items.Add(it);
 
-            // Αν το service κατάφερε να αναγνωρίσει προμηθευτή, τον ορίζουμε
-            if (supplierId.HasValue) SupplierId = supplierId.Value;
-
-            // Προαιρετικό info (π.χ. για MARK)
+            // ΔΕΝ αλλάζουμε ποτέ SupplierId από QR
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // ενημέρωσε CanExecute (Save χρειάζεται προμηθευτή)
+            ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
         }
 
-        private async Task LoadSuppliersAsync()
-        {
-            var list = await _unitOfWork.Suppliers.GetAllAsync();
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                Suppliers.Clear();
-                foreach (var s in list) Suppliers.Add(s);
-
-                // Αν δεν έχει επιλεγεί supplier, βάλε τον πρώτο διαθέσιμο
-                if (SupplierId <= 0 && Suppliers.Any())
-                    SupplierId = Suppliers.First().Id;
-            });
-        }
         private async void SaveMappings()
         {
-            // 1) Διπλά barcodes σε διαφορετικούς SupplierCodes → μπλοκάρουμε
-            var withBarcode = Items
-                .Select((item, idx) => new { item, idx })
-                .Where(x => !string.IsNullOrWhiteSpace(x.item.Barcode))
-                .ToList();
+            // Safety: πρέπει να υπάρχει επιλεγμένος προμηθευτής
+            if (!HasValidSupplier)
+            {
+                MessageBox.Show("Επίλεξε προμηθευτή από το dropdown πριν την αποθήκευση.",
+                    "Αποθήκευση", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Έλεγχος διπλών barcodes σε διαφορετικούς supplier codes
+            var withBarcode = Items.Select((item, idx) => new { item, idx })
+                                   .Where(x => !string.IsNullOrWhiteSpace(x.item.Barcode))
+                                   .ToList();
 
             var duplicates = withBarcode
                 .GroupBy(x => x.item.Barcode!.Trim())
@@ -128,18 +155,15 @@ namespace HermesPOS.ViewModels
                     .Where(d => d.DistinctSupplierCodes > 1)
                     .Select(d => $"Barcode: {d.Barcode}\nΓραμμές: {string.Join(", ", d.Rows.Select(r => $"#{r.idx + 1} ({r.SupplierCode})"))}"));
 
-                MessageBox.Show(
-                    "Διπλό barcode σε διαφορετικές γραμμές:\n\n" + msg,
-                    "Σφάλμα αποθήκευσης",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Διπλό barcode σε διαφορετικές γραμμές:\n\n" + msg,
+                    "Σφάλμα αποθήκευσης", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            // 2) Προειδοποίηση για γραμμές χωρίς barcode (επιτρέπουμε Save)
-            var missingBarcode = Items
-                .Select((item, idx) => new { item, idx })
-                .Where(x => string.IsNullOrWhiteSpace(x.item.Barcode))
-                .ToList();
+            // Προειδοποίηση για κενά barcodes (επιτρέπουμε Draft)
+            var missingBarcode = Items.Select((item, idx) => new { item, idx })
+                                      .Where(x => string.IsNullOrWhiteSpace(x.item.Barcode))
+                                      .ToList();
 
             if (missingBarcode.Any())
             {
@@ -150,27 +174,13 @@ namespace HermesPOS.ViewModels
                     "Προειδοποίηση", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
-            // 🔹 Βρες ΕΓΚΥΡΟ SupplierId από τη βάση (όχι σκληροκώδικα)
-            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
-            if (suppliers == null || !suppliers.Any())
-            {
-                MessageBox.Show("Δεν υπάρχει καταχωρημένος προμηθευτής στη βάση. Δημιούργησε έναν πρώτα.",
-                    "Αποθήκευση", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             int supplierId = SupplierId;
-            if (!suppliers.Any(s => s.Id == supplierId))
-            {
-                supplierId = suppliers.First().Id; // πάρε έναν υπαρκτό (π.χ. 17/20)
-                SupplierId = supplierId;           // κράτα τον για τα επόμενα saves/post
-            }
 
             try
             {
                 if (_currentReceptionId.HasValue)
                 {
-                    // -------- UPDATE ΥΠΑΡΧΟΝΤΟΣ DRAFT --------
+                    // UPDATE υπάρχοντος draft
                     var rec = await _unitOfWork.StockReceptions.GetDraftByIdAsync(_currentReceptionId.Value);
                     if (rec == null)
                     {
@@ -181,7 +191,7 @@ namespace HermesPOS.ViewModels
 
                     rec.SupplierId = supplierId;
                     rec.ReceptionDate = DateTime.Now;
-                    rec.Status = ReceptionStatus.Draft; // ασφάλεια
+                    rec.Status = ReceptionStatus.Draft;
 
                     rec.Items.Clear();
                     foreach (var i in Items)
@@ -203,7 +213,7 @@ namespace HermesPOS.ViewModels
                 }
                 else
                 {
-                    // -------- ΔΗΜΙΟΥΡΓΙΑ ΝΕΟΥ DRAFT --------
+                    // ΝΕΟ draft
                     var mark = "DEV-" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
                     var exists = await _unitOfWork.StockReceptions.ExistsByMarkAsync(mark);
@@ -248,17 +258,23 @@ namespace HermesPOS.ViewModels
             {
                 var baseMsg = ex.GetBaseException().Message;
                 MessageBox.Show(
-                    $"Σφάλμα κατά την αποθήκευση:\n{baseMsg}\n\n{ex}",
+                    $"Σφάλμα κατά την αποθήκευση:\n{baseMsg}",
                     "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
 
         private async void PostReception()
         {
             if (!_currentReceptionId.HasValue)
             {
                 MessageBox.Show("Πρέπει πρώτα να κάνεις Αποθήκευση (δημιουργία Draft).",
+                    "Αδυναμία Post", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!HasValidSupplier)
+            {
+                MessageBox.Show("Επίλεξε προμηθευτή πριν την Ολοκλήρωση.",
                     "Αδυναμία Post", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -272,14 +288,16 @@ namespace HermesPOS.ViewModels
 
             if (ok)
             {
-                // καθάρισμα UI μετά το Post
                 _currentReceptionId = null;
                 _currentMark = null;
                 Items.Clear();
                 ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
             }
         }
+
         public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        private void OnPropertyChanged(string name) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
