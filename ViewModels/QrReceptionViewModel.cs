@@ -52,6 +52,7 @@ namespace HermesPOS.ViewModels
         public ICommand ImportFromQrCommand { get; }
         public ICommand SaveMappingsCommand { get; }
         public ICommand PostReceptionCommand { get; }
+        public ICommand RemoveLineCommand { get; }
 
         public QrReceptionViewModel(IUnitOfWork unitOfWork, IStockReceptionService receptionService)
         {
@@ -61,8 +62,14 @@ namespace HermesPOS.ViewModels
             ImportFromQrCommand = new RelayCommand(ImportFromQr);
             SaveMappingsCommand = new RelayCommand(SaveMappings, () => HasValidSupplier && Items.Any());
             PostReceptionCommand = new RelayCommand(PostReception, () => _currentReceptionId.HasValue && HasValidSupplier);
-
+            RemoveLineCommand = new RelayCommand<StockReceptionItem>(RemoveLine);
             _ = LoadSuppliersAsync(); // δεν προεπιλέγουμε — ο χρήστης διαλέγει
+        }
+        private void RemoveLine(StockReceptionItem item)
+        {
+            if (item == null) return;
+            Items.Remove(item);
+            // προαιρετικά: αν έχεις draft ενεργό, ο χρήστης πατά "Αποθήκευση" για να γραφτεί η αλλαγή στη ΒΔ
         }
         public async Task EnsureSuppliersLoadedAsync()
         {

@@ -53,14 +53,50 @@
 
         <!-- ΚΕΝΤΡΟ: DataGrid (γεμίζει τον χώρο, έχει δικό του scroll) -->
         <DataGrid ItemsSource="{Binding Items}"
-              AutoGenerateColumns="False"
-              CanUserAddRows="False">
+          AutoGenerateColumns="False"
+          CanUserAddRows="False"
+          HeadersVisibility="Column"
+          RowHeaderWidth="0"
+          ColumnWidth="SizeToCells"
+          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="SupplierCode" Binding="{Binding SupplierCode}" />
-                <DataGridTextColumn Header="Περιγραφή"    Binding="{Binding Description}" />
-                <DataGridTextColumn Header="Ποσότητα"     Binding="{Binding Quantity}" />
-                <DataGridTextColumn Header="Barcode Προϊόντος" Binding="{Binding Barcode}" />
+                <DataGridTextColumn Header="SupplierCode"
+                            Binding="{Binding SupplierCode}"
+                            Width="140"/>
+                <DataGridTextColumn Header="Περιγραφή"
+                            Binding="{Binding Description}"
+                            Width="*"/>
+                <!-- γεμίζει το υπόλοιπο -->
+                <DataGridTemplateColumn Header="Ποσότητα" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Quantity}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Barcode Προϊόντος"
+                            Binding="{Binding Barcode}"
+                            Width="180"/>
+
+                <DataGridTemplateColumn Header="" Width="200">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Διαγραφή"
+                            Padding="6,2"
+                            Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                            CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
+
     </DockPanel>
 </UserControl>

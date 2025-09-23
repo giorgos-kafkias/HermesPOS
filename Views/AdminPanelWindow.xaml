@@ -5,7 +5,7 @@
         xmlns:views="clr-namespace:HermesPOS.Views"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Πίνακας Διαχειριστή"
-        Height="600" Width="800"
+        Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         Background="#E3F2FD">
 
@@ -346,7 +346,7 @@
                 <views:ReceiveStockTab DataContext="{Binding ReceiveStockViewModel}" />
             </TabItem>
             <TabItem Header="📄 Παραλαβή από QR">
-                <views:QrReceptionView DataContext="{Binding QrReceptionViewModel}" />
+                <views:QrReceptionView DataContext="{Binding QrReceptionViewModel}" Loaded="QrReceptionView_Loaded" />
             </TabItem>
 
 

@@ -100,6 +100,9 @@ namespace HermesPOS.Views
 			Window.GetWindow(this)?.Close(); // Κλείνει το τρέχον παράθυρο
 		}
 
+        private void QrReceptionView_Loaded(object sender, RoutedEventArgs e)
+        {
 
-	}
+        }
+    }
 }
