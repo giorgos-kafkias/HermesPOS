@@ -1,26 +1,19 @@
-﻿using HermesPOS.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace HermesPOS.Views
 {
-    public partial class QrReceptionView : System.Windows.Controls.UserControl
+    public partial class QrReceptionView : UserControl
     {
         public QrReceptionView()
         {
             InitializeComponent();
+            Loaded += QrReceptionView_Loaded;
+        }
+
+        private void QrReceptionView_Loaded(object sender, RoutedEventArgs e)
+        {
+            QrTextBox.Focus();
         }
     }
 }

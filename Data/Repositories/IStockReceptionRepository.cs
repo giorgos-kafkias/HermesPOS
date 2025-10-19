@@ -9,6 +9,7 @@ namespace HermesPOS.Data.Repositories
         Task<StockReception> AddDraftAsync(StockReception reception);
         // 🔹 ΝΕΟ:
         Task<StockReception?> GetDraftByIdAsync(int id);
+        Task<StockReception?> GetByMarkAsync(string mark);
         void Update(StockReception reception); // χωρίς SaveChanges
     }
 }

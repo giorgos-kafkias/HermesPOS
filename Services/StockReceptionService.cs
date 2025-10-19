@@ -10,6 +10,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
+
 
 namespace HermesPOS.Services
 {
@@ -25,9 +28,9 @@ namespace HermesPOS.Services
             _http = http;
             _uow = uow;
         }
+
         public async Task<(bool ok, string message)> PostReceptionAsync(int receptionId)
         {
-            // 1) Φόρτωσε το draft ως tracked
             var rec = await _db.StockReceptions
                 .AsTracking()
                 .Include(r => r.Items)
@@ -36,15 +39,12 @@ namespace HermesPOS.Services
             if (rec == null) return (false, "Η παραλαβή δεν βρέθηκε.");
             if (rec.Status != ReceptionStatus.Draft) return (false, "Η παραλαβή δεν είναι Draft.");
 
-            // 2) Έγκυρος προμηθευτής
             var supplierExists = await _db.Suppliers.AnyAsync(s => s.Id == rec.SupplierId);
             if (!supplierExists) return (false, $"Ο προμηθευτής με Id={rec.SupplierId} δεν υπάρχει.");
 
-            // 3) Όλες οι γραμμές να έχουν barcode
             if (rec.Items.Any(i => string.IsNullOrWhiteSpace(i.Barcode)))
                 return (false, "Υπάρχουν γραμμές χωρίς barcode.");
 
-            // 4) Resolve προϊόντων από barcodes
             var bcs = rec.Items.Select(i => i.Barcode!.Trim()).Distinct().ToList();
             var products = await _db.Products.Where(p => bcs.Contains(p.Barcode)).ToListAsync();
             var missing = bcs.Except(products.Select(p => p.Barcode)).ToList();
@@ -53,7 +53,6 @@ namespace HermesPOS.Services
 
             var prodByBarcode = products.ToDictionary(p => p.Barcode, p => p);
 
-            // 5) Συναλλαγή
             await using var tx = await _db.Database.BeginTransactionAsync();
             try
             {
@@ -61,25 +60,28 @@ namespace HermesPOS.Services
                 foreach (var g in rec.Items.GroupBy(i => prodByBarcode[i.Barcode!].Id))
                 {
                     var pid = g.Key;
-                    // Quantity είναι decimal -> γύρνα το σε int (στρογγυλοποίηση)
                     var qty = (int)Math.Round(g.Sum(x => x.Quantity), MidpointRounding.AwayFromZero);
                     var prod = products.First(p => p.Id == pid);
-                    prod.Stock += qty;  // Stock είναι int
+                    prod.Stock += qty;
                 }
 
-                // β) SupplierProductMap (όσα λείπουν)
+                // β) SupplierProductMap χωρίς διπλές εγγραφές
                 var maps = await _db.SupplierProductMaps
                     .Where(m => m.SupplierId == rec.SupplierId)
+                    .Select(m => new { m.SupplierCode, m.ProductId })
                     .ToListAsync();
+
+                var existing = new HashSet<(string code, int pid)>(
+                    maps.Select(m => (Norm(m.SupplierCode), m.ProductId)));
 
                 foreach (var item in rec.Items)
                 {
                     var product = prodByBarcode[item.Barcode!];
-                    bool existsMap = maps.Any(m =>
-                        m.SupplierId == rec.SupplierId &&
-                        m.SupplierCode == (item.SupplierCode ?? string.Empty) &&
-                        m.ProductId == product.Id);
-                    if (!existsMap)
+                    var codeKey = Norm(item.SupplierCode);
+                    if (codeKey.Length == 0) continue;
+
+                    var tuple = (codeKey, product.Id);
+                    if (existing.Add(tuple))
                     {
                         _db.SupplierProductMaps.Add(new SupplierProductMap
                         {
@@ -90,7 +92,7 @@ namespace HermesPOS.Services
                     }
                 }
 
-                // γ) Μαρκάρουμε Posted
+                // γ) Posted
                 rec.Status = ReceptionStatus.Posted;
 
                 await _db.SaveChangesAsync();
@@ -105,15 +107,16 @@ namespace HermesPOS.Services
             }
         }
 
-        public async Task<(bool ok, string message, List<StockReceptionItem> items, int? supplierId)>
-            FetchFromQrUrlAsync(string? urlOrToken)
+        public async Task<(bool ok, string message, List<StockReceptionItem> items, int? supplierId, string? mark)>
+            FetchFromQrUrlAsync(string qrUrl)
         {
             var items = new List<StockReceptionItem>();
             int? supplierId = null;
+            string? mark = null;
 
-            var token = (urlOrToken ?? "").Trim();
+            var token = (qrUrl ?? "").Trim();
             if (string.IsNullOrWhiteSpace(token))
-                return (false, "Δώσε URL ή token από το QR.", items, null);
+                return (false, "Δώσε URL ή token από το QR.", items, null, null);
 
             // Αν μας έδωσαν μόνο το token, φτιάξε το πλήρες URL
             string url = token.StartsWith("http", StringComparison.OrdinalIgnoreCase)
@@ -125,24 +128,43 @@ namespace HermesPOS.Services
             req.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             var resp = await _http.SendAsync(req);
             if (!resp.IsSuccessStatusCode)
-                return (false, $"HTTP {(int)resp.StatusCode}: δεν μπόρεσα να διαβάσω τη σελίδα της ΑΑΔΕ.", items, null);
+                return (false, $"HTTP {(int)resp.StatusCode}: δεν μπόρεσα να διαβάσω τη σελίδα της ΑΑΔΕ.", items, null, null);
 
             var html = await resp.Content.ReadAsStringAsync();
             if (string.IsNullOrWhiteSpace(html))
-                return (false, "Κενή απάντηση από την ΑΑΔΕ.", items, null);
+                return (false, "Κενή απάντηση από την ΑΑΔΕ.", items, null, null);
 
             // Parse HTML
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            // MARK + Προμηθευτής
-            string? mark = doc.GetElementbyId("tmark")?.InnerText?.Trim();
+            // MARK (robust)
+            mark = doc.GetElementbyId("tmark")?.InnerText?.Trim();
+
+            if (string.IsNullOrWhiteSpace(mark))
+            {
+                // 1ο fallback: "MARK: 123456..." οπουδήποτε στο HTML
+                var m1 = Regex.Match(html, @"MARK\s*[:=]?\s*([0-9]{8,20})", RegexOptions.IgnoreCase);
+                if (m1.Success) mark = m1.Groups[1].Value;
+            }
+
+            if (string.IsNullOrWhiteSpace(mark))
+            {
+                // 2ο fallback: σταθερό pseudo-MARK από το υπάρχον 'token' (ΔΕΝ το ξαναδηλώνουμε)
+                using var sha1 = SHA1.Create();
+                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(token));
+                mark = "QR-" + Convert.ToHexString(hash).Substring(0, 16);
+            }
+
+            var tableByHeading =
+                doc.DocumentNode.SelectSingleNode("//h2[contains(normalize-space(.),'Στοιχεία δελτίου διακίνησης')]/following::table[1]")
+                ?? doc.DocumentNode.SelectSingleNode("//h3[contains(normalize-space(.),'Στοιχεία δελτίου διακίνησης')]/following::table[1]");
 
             // Βρες τον πίνακα γραμμών
-            HtmlNode? table = doc.GetElementbyId("tableDiakinisis");
+            HtmlNode? table = doc.GetElementbyId("tableDiakinisis") ?? tableByHeading;
+
             if (table == null)
             {
-                // εναλλακτικό: βρες table με κεφαλίδες “Κωδικός/Περιγραφή/Ποσότητα”
                 var tables = doc.DocumentNode.SelectNodes("//table") ?? new HtmlNodeCollection(null);
                 foreach (var t in tables)
                 {
@@ -158,8 +180,12 @@ namespace HermesPOS.Services
                     if (hasDescr && hasQty) { table = t; break; }
                 }
             }
+
             if (table == null)
-                return (false, "Δεν βρέθηκε πίνακας γραμμών στο HTML της ΑΑΔΕ. Ίσως άλλαξε η μορφή σελίδας.", items, supplierId);
+                return (false,
+                    "Η σελίδα της ΑΑΔΕ δεν περιέχει γραμμές διακίνησης.\n" +
+                    "Δεν είναι δυνατό να γίνει αυτόματη εισαγωγή από QR.",
+                    items, supplierId, mark);
 
             // Πάρε “κεφαλίδες” όπου κι αν είναι
             List<HtmlNode> GetHeaderCells(HtmlNode tbl)
@@ -187,44 +213,16 @@ namespace HermesPOS.Services
                 return -1;
             }
 
-            int idxKodikos = IndexByKeys(headerCells, "Κωδικός", "Κωδικός Είδους", "Κωδ.");
-            int idxPerigrafi = IndexByKeys(headerCells, "Περιγραφή");
-            int idxPosotita = IndexByKeys(headerCells, "Ποσότητα");
-
-            // Αν δεν βρέθηκε "Ποσότητα", μάντεψε από τα πρώτα rows ποια στήλη είναι κυρίως αριθμητική
-            if (idxPosotita < 0 && headerCells.Count > 0)
-            {
-                var dataRowsGuess = table.SelectNodes(".//tbody/tr[position()>1]") ??
-                                    table.SelectNodes(".//tr[td][position()>1]") ??
-                                    new HtmlNodeCollection(null);
-
-                int rowsToCheck = Math.Min(6, dataRowsGuess.Count);
-                int bestIdx = -1, bestScore = -1;
-
-                for (int c = 0; c < headerCells.Count; c++)
-                {
-                    int score = 0;
-                    for (int r = 0; r < rowsToCheck; r++)
-                    {
-                        var tds = dataRowsGuess[r].SelectNodes("./td")?.ToList();
-                        if (tds == null || c >= tds.Count) continue;
-
-                        var txt = HtmlEntity.DeEntitize(tds[c].InnerText).Trim();
-                        if (TryParseDecimal(txt, out _)) score++;
-                    }
-                    if (score > bestScore) { bestScore = score; bestIdx = c; }
-                }
-                if (bestScore >= 2) idxPosotita = bestIdx;
-            }
-
-            // Απλοί fallbacks
-            if (idxPerigrafi < 0 && headerCells.Count >= 3) idxPerigrafi = 2;
-            if (idxKodikos < 0 && headerCells.Count >= 2) idxKodikos = 1;
+            int idxKodikos = IndexByKeys(headerCells,
+                "Κωδικός", "Κωδικος", "Κωδικός Είδους", "Κωδ. Είδους", "CODE");
+            int idxPerigrafi = IndexByKeys(headerCells,
+                "Περιγραφή", "DESCRIPTION", "ITEM");
+            int idxPosotita = IndexByKeys(headerCells,
+                "Ποσότητα", "ΠΟΣΟΤΗΤΑ", "QTY", "QUANTITY");
 
             if (idxPerigrafi < 0 || idxPosotita < 0)
-                return (false, "Δεν μπόρεσα να εντοπίσω τις στήλες Περιγραφή/Ποσότητα.", items, supplierId);
+                return (false, "Δεν μπόρεσα να εντοπίσω τις στήλες Περιγραφή/Ποσότητα.", items, supplierId, mark);
 
-            // Δεδομένα
             var dataRows = table.SelectNodes(".//tbody/tr[position()>1]") ??
                            table.SelectNodes(".//tr[td][position()>1]") ??
                            new HtmlNodeCollection(null);
@@ -251,20 +249,117 @@ namespace HermesPOS.Services
             }
 
             if (items.Count == 0)
-                return (false, "Δε βρέθηκαν γραμμές στο παραστατικό.", items, supplierId);
+                return (false, "Δε βρέθηκαν γραμμές στο παραστατικό.", items, supplierId, mark);
 
-            var info = !string.IsNullOrWhiteSpace(mark) ? $"MARK: {mark}" : "";
-            return (true, info, items, supplierId);
+            return (true, $"MARK: {mark}", items, supplierId, mark);
         }
 
+        public async Task<int> AutoMapBarcodesAsync(int supplierId, IEnumerable<StockReceptionItem> items)
+        {
+            if (supplierId <= 0 || items == null) return 0;
 
-        // -------- helpers --------
+            var list = items.ToList();
+            int filled = 0;
+
+            var targetCodes = list
+                .Where(i => string.IsNullOrWhiteSpace(i.Barcode) && !string.IsNullOrWhiteSpace(i.SupplierCode))
+                .Select(i => Norm(i.SupplierCode))
+                .Where(k => k.Length > 0)
+                .Distinct()
+                .ToList();
+
+            if (targetCodes.Count > 0)
+            {
+                var maps = await _db.SupplierProductMaps
+                    .Where(m => m.SupplierId == supplierId)
+                    .Select(m => new { m.SupplierCode, m.ProductId })
+                    .ToListAsync();
+
+                var productIdsByCode = maps
+                    .GroupBy(m => Norm(m.SupplierCode))
+                    .Where(g => g.Key.Length > 0 && g.Select(x => x.ProductId).Distinct().Count() == 1)
+                    .ToDictionary(g => g.Key, g => g.First().ProductId);
+
+                var productIds = productIdsByCode
+                    .Where(kv => targetCodes.Contains(kv.Key))
+                    .Select(kv => kv.Value)
+                    .Distinct()
+                    .ToList();
+
+                if (productIds.Count > 0)
+                {
+                    var products = await _db.Products
+                        .Where(p => productIds.Contains(p.Id) && !string.IsNullOrWhiteSpace(p.Barcode))
+                        .Select(p => new { p.Id, p.Barcode })
+                        .ToListAsync();
+
+                    var barcodeByProductId = products.ToDictionary(p => p.Id, p => p.Barcode!);
+
+                    foreach (var it in list)
+                    {
+                        if (!string.IsNullOrWhiteSpace(it.Barcode)) continue;
+                        var codeKey = Norm(it.SupplierCode);
+                        if (codeKey.Length == 0) continue;
+
+                        if (productIdsByCode.TryGetValue(codeKey, out var pid) &&
+                            barcodeByProductId.TryGetValue(pid, out var bc) &&
+                            !string.IsNullOrWhiteSpace(bc))
+                        {
+                            it.Barcode = bc;
+                            filled++;
+                        }
+                    }
+                }
+            }
+
+            return filled;
+        }
+
+        public async Task<List<(StockReceptionItem item, string barcode, string productName)>> SuggestBarcodesAsync(
+            int supplierId, IEnumerable<StockReceptionItem> items)
+        {
+            var result = new List<(StockReceptionItem, string, string)>();
+            if (supplierId <= 0 || items == null) return result;
+
+            var list = items.Where(i => string.IsNullOrWhiteSpace(i.Barcode)).ToList();
+            if (list.Count == 0) return result;
+
+            static string Key(string? s) => NormalizeGreek(GreekLatinFold(s ?? string.Empty));
+
+            var productsForSupplier = await _db.Products
+                .Where(p => p.SupplierId == supplierId &&
+                            !string.IsNullOrWhiteSpace(p.Name) &&
+                            !string.IsNullOrWhiteSpace(p.Barcode))
+                .Select(p => new { p.Name, p.Barcode })
+                .ToListAsync();
+
+            var byName = productsForSupplier
+                .GroupBy(x => Key(x.Name))
+                .Where(g => g.Key != string.Empty && g.Count() == 1)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (Name: g.First().Name, Barcode: g.First().Barcode!),
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var it in list)
+            {
+                var k = Key(it.Description);
+                if (k.Length == 0) continue;
+
+                if (byName.TryGetValue(k, out var v) && !string.IsNullOrWhiteSpace(v.Barcode))
+                {
+                    result.Add((it, v.Barcode, v.Name));
+                }
+            }
+
+            return result;
+        }
+
         private static string NormalizeGreek(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return string.Empty;
 
-            s = HtmlAgilityPack.HtmlEntity.DeEntitize(s);
-            s = s.Replace('\u00A0', ' ');
+            s = HtmlEntity.DeEntitize(s).Replace('\u00A0', ' ');
             s = System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ").Trim();
 
             var formD = s.Normalize(NormalizationForm.FormD);
@@ -274,117 +369,44 @@ namespace HermesPOS.Services
                 var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
                 if (uc != UnicodeCategory.NonSpacingMark) sb.Append(ch);
             }
-            return sb.ToString().Normalize(NormalizationForm.FormC).ToUpperInvariant();
+            var cleaned = sb.ToString().Normalize(NormalizationForm.FormC).ToUpperInvariant();
+
+            cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"[^A-Z0-9Α-Ω ]", "");
+            return cleaned.Trim();
         }
 
-        private static HtmlAgilityPack.HtmlNode? FindDataTable(HtmlAgilityPack.HtmlDocument doc)
+        private static string Norm(string? s)
         {
-            var tables = doc.DocumentNode.SelectNodes("//table");
-            if (tables == null) return null;
-
-            foreach (var t in tables)
-            {
-                // Πάρε headers είτε είναι σε <thead><th>, είτε στο 1ο <tr> με <th> ή <td>
-                var headerCells =
-                    t.SelectNodes(".//thead//th")
-                    ?? t.SelectNodes(".//tr[th][1]//th")
-                    ?? t.SelectNodes(".//tr[1]//th")
-                    ?? t.SelectNodes(".//tr[1]//td");
-
-                if (headerCells == null || headerCells.Count == 0)
-                    continue;
-
-                var headers = headerCells
-                    .Select(h => NormalizeGreek(HtmlAgilityPack.HtmlEntity.DeEntitize(h.InnerText)))
-                    .ToList();
-
-                // Υποστήριξε και αγγλικά
-                bool hasDescr = headers.Any(h => h.Contains("ΠΕΡΙΓΡΑΦ") || h.Contains("DESCRIPTION"));
-                bool hasQty = headers.Any(h => h.Contains("ΠΟΣΟΤ") || h.Contains("QUANTITY"));
-                bool hasCode = headers.Any(h => h.Contains("ΚΩΔΙΚ") || h.Contains("CODE"));
-
-                // Συνήθως αυτά τα δύο φτάνουν
-                if (hasDescr && hasQty)
-                    return t;
-
-                // fallback: πίνακας με 5+ στήλες και κελιά με αριθμούς
-                var firstDataRow = t.SelectSingleNode(".//tr[td]");
-                var dataTds = firstDataRow?.SelectNodes("./td");
-                if (dataTds != null && dataTds.Count >= 5)
-                {
-                    // αν βρούμε αριθμητική στήλη (quantity-like) + “λογοτεχνικό” κελί (περιγραφή)
-                    bool anyNumeric = dataTds.Any(td =>
-                    {
-                        var s = HtmlAgilityPack.HtmlEntity.DeEntitize(td.InnerText).Trim()
-                                .Replace('\u00A0', ' ');
-                        return decimal.TryParse(s, NumberStyles.Any, new CultureInfo("el-GR"), out _)
-                            || decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out _);
-                    });
-
-                    bool anyTexty = dataTds.Any(td =>
-                    {
-                        var s = NormalizeGreek(HtmlAgilityPack.HtmlEntity.DeEntitize(td.InnerText));
-                        return s.Length > 3 && s.Any(char.IsLetter);
-                    });
-
-                    if (anyNumeric && anyTexty)
-                        return t;
-                }
-            }
-
-            return null;
+            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+            var cleaned = System.Text.RegularExpressions.Regex.Replace(s.Trim(), @"\s+", " ");
+            return cleaned.ToUpperInvariant();
         }
 
-
-        private static int FindHeaderIndexByKey(IEnumerable<HtmlAgilityPack.HtmlNode> ths, params string[] keys)
+        static string GreekLatinFold(string s)
         {
-            var list = ths.ToList();
-            for (int i = 0; i < list.Count; i++)
-            {
-                var text = NormalizeGreek(HtmlAgilityPack.HtmlEntity.DeEntitize(list[i].InnerText));
-                foreach (var key in keys)
-                {
-                    var nKey = NormalizeGreek(key);
-                    if (text.Contains(nKey))
-                        return i;
-
-                    // Αγγλικές εναλλακτικές
-                    if (nKey.Contains("ΠΕΡΙΓΡΑΦ") && (text.Contains("DESCRIPTION") || text.Contains("ITEM")))
-                        return i;
-                    if (nKey.Contains("ΠΟΣΟΤ") && (text.Contains("QUANTITY") || text.Contains("QTY")))
-                        return i;
-                    if (nKey.Contains("ΚΩΔΙΚ") && (text.Contains("CODE") || text.Contains("ITEM CODE")))
-                        return i;
-                }
-            }
-            return -1;
+            return s
+                .Replace('Α', 'A').Replace('Β', 'B').Replace('Ε', 'E').Replace('Ζ', 'Z')
+                .Replace('Η', 'H').Replace('Ι', 'I').Replace('Κ', 'K').Replace('Μ', 'M')
+                .Replace('Ν', 'N').Replace('Ο', 'O').Replace('Ρ', 'P').Replace('Τ', 'T')
+                .Replace('Υ', 'Y').Replace('Χ', 'X')
+                .Replace('ά', 'a').Replace('έ', 'e').Replace('ί', 'i').Replace('ό', 'o')
+                .Replace('ή', 'h').Replace('ύ', 'y').Replace('ϊ', 'i').Replace('ϋ', 'y');
         }
 
-        private static string SafeText(List<HtmlAgilityPack.HtmlNode> tds, int idx)
+        private static string SafeText(List<HtmlNode> tds, int idx)
         {
             if (idx < 0 || idx >= tds.Count) return "";
-            var s = HtmlAgilityPack.HtmlEntity.DeEntitize(tds[idx].InnerText ?? "");
+            var s = HtmlEntity.DeEntitize(tds[idx].InnerText ?? "");
             s = s.Replace('\u00A0', ' ');
             s = System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ").Trim();
             return s;
         }
-        private static string? ExtractCellAfterLabel(HtmlDocument doc, string labelContains)
-        {
-            if (doc?.DocumentNode == null) return null;  
-            var rows = doc.DocumentNode.SelectNodes("//tr[td and td[2]]"); 
-            if (rows == null) return null;
-            foreach (var tr in rows)
-            { var first = tr.SelectSingleNode("./td[1]"); 
-                if (first == null) continue; var firstText = HtmlEntity.DeEntitize(first.InnerText ?? string.Empty).Trim();
-                 if (firstText.IndexOf(labelContains, StringComparison.OrdinalIgnoreCase) >= 0) { var val = tr.SelectSingleNode("./td[2]")?.InnerText?.Trim() ?? string.Empty; 
-                    return HtmlEntity.DeEntitize(val); } } return null; 
-        }
+
         private static bool TryParseDecimal(string s, out decimal value)
         {
-            s = (s ?? "").Trim(); 
-            return decimal.TryParse(s, NumberStyles.Any, new 
-                CultureInfo("el-GR"), out value) || decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out value); }
+            s = (s ?? "").Trim();
+            return decimal.TryParse(s, NumberStyles.Any, new CultureInfo("el-GR"), out value) ||
+                   decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
         }
-
+    }
 }
-

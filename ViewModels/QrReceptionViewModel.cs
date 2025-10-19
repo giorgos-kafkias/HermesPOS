@@ -1,4 +1,5 @@
-﻿using HermesPOS.Data.Repositories;
+﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using HermesPOS.Data.Repositories;
 using HermesPOS.Models;
 using HermesPOS.Services;
 using System;
@@ -16,14 +17,28 @@ namespace HermesPOS.ViewModels
         private readonly IUnitOfWork _unitOfWork;
         private readonly IStockReceptionService _receptionService;
 
-        public ObservableCollection<Supplier> Suppliers { get; } = new();
-
         // Τρέχον draft
         private int? _currentReceptionId;
         private string? _currentMark;
 
         // Γραμμές UI
         public ObservableCollection<StockReceptionItem> Items { get; } = new();
+        public ObservableCollection<Supplier> Suppliers { get; } = new();
+
+        // Προτάσεις PASS 2 (μόνο εμφάνιση/εφαρμογή από χρήστη)
+        public sealed class Proposal
+        {
+            public StockReceptionItem Item { get; }
+            public string Barcode { get; }
+            public string ProductName { get; }
+
+            public Proposal(StockReceptionItem item, string barcode, string productName)
+            {
+                Item = item; Barcode = barcode; ProductName = productName;
+            }
+        }
+        public ObservableCollection<Proposal> Suggestions { get; } = new();
+        public bool HasSuggestions => Suggestions.Any();
 
         // Header UI
         private int _supplierId;
@@ -37,9 +52,11 @@ namespace HermesPOS.ViewModels
                     _supplierId = value;
                     OnPropertyChanged(nameof(SupplierId));
                     OnPropertyChanged(nameof(HasValidSupplier));
-                    // enable/disable Save/Post ανάλογα
                     ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
                     ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
+
+                    // Re-map PASS 1 και μετά ανανέωση προτάσεων PASS 2
+                    _ = RefreshAfterSupplierChangeAsync();
                 }
             }
         }
@@ -53,6 +70,9 @@ namespace HermesPOS.ViewModels
         public ICommand SaveMappingsCommand { get; }
         public ICommand PostReceptionCommand { get; }
         public ICommand RemoveLineCommand { get; }
+        public ICommand ApplySuggestionCommand { get; }
+        public ICommand ClearQrCommand { get; }
+
 
         public QrReceptionViewModel(IUnitOfWork unitOfWork, IStockReceptionService receptionService)
         {
@@ -63,14 +83,22 @@ namespace HermesPOS.ViewModels
             SaveMappingsCommand = new RelayCommand(SaveMappings, () => HasValidSupplier && Items.Any());
             PostReceptionCommand = new RelayCommand(PostReception, () => _currentReceptionId.HasValue && HasValidSupplier);
             RemoveLineCommand = new RelayCommand<StockReceptionItem>(RemoveLine);
-            _ = LoadSuppliersAsync(); // δεν προεπιλέγουμε — ο χρήστης διαλέγει
+            ApplySuggestionCommand = new RelayCommand<Proposal>(ApplySuggestion);
+            ClearQrCommand = new RelayCommand(ClearQr);
+
+            _ = LoadSuppliersAsync();
         }
+
         private void RemoveLine(StockReceptionItem item)
         {
             if (item == null) return;
             Items.Remove(item);
-            // προαιρετικά: αν έχεις draft ενεργό, ο χρήστης πατά "Αποθήκευση" για να γραφτεί η αλλαγή στη ΒΔ
+            // Καθάρισε σχετικές προτάσεις για το item
+            var toRemove = Suggestions.Where(p => p.Item == item).ToList();
+            foreach (var p in toRemove) Suggestions.Remove(p);
+            OnPropertyChanged(nameof(HasSuggestions));
         }
+
         public async Task EnsureSuppliersLoadedAsync()
         {
             if (Suppliers.Count > 0) return;
@@ -82,7 +110,6 @@ namespace HermesPOS.ViewModels
                 Suppliers.Clear();
                 foreach (var s in list) Suppliers.Add(s);
 
-                // αν δεν έχει οριστεί SupplierId, βάλε τον πρώτο διαθέσιμο
                 if (SupplierId <= 0 && Suppliers.Any())
                     SupplierId = Suppliers.First().Id;
             });
@@ -97,7 +124,6 @@ namespace HermesPOS.ViewModels
                 Suppliers.Clear();
                 foreach (var s in list) Suppliers.Add(s);
 
-                // ΔΕΝ προεπιλέγουμε — περιμένουμε επιλογή από το dropdown
                 ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
                 ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
             });
@@ -105,34 +131,60 @@ namespace HermesPOS.ViewModels
 
         private async void ImportFromQr()
         {
-            // reset draft state
             _currentReceptionId = null;
             _currentMark = null;
             ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
 
             var url = (QrUrl ?? "").Trim();
-            var (ok, message, items, _) = await _receptionService.FetchFromQrUrlAsync(url);
+            var (ok, message, items, supplierId, mark) = await _receptionService.FetchFromQrUrlAsync(url);
+            if (!ok) { MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
 
-            if (!ok)
+            // ΧΡΗΣΗ του mark που ΕΠΕΣΤΡΕΨΕ το service (όχι από το message)
+            if (!string.IsNullOrWhiteSpace(mark))
             {
-                MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                var existing = await _unitOfWork.StockReceptions.GetByMarkAsync(mark);
+                if (existing != null)
+                {
+                    _currentReceptionId = existing.Id;
+                    _currentMark = existing.Mark;
+
+                    Items.Clear();
+                    foreach (var i in existing.Items) Items.Add(i);
+
+                    SupplierId = existing.SupplierId;
+
+                    MessageBox.Show($"Φορτώθηκε το υπάρχον draft #{existing.Id}\n(MARK: {existing.Mark})",
+                        "Επαναφόρτωση", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
+                    ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
+                    return;
+                }
+                else
+                {
+                    // Κρατάμε το MARK της ΑΑΔΕ για το νέο draft
+                    _currentMark = mark;
+                }
             }
 
             Items.Clear();
             foreach (var it in items) Items.Add(it);
 
-            // ΔΕΝ αλλάζουμε ποτέ SupplierId από QR
+            if (SupplierId <= 0 && supplierId.HasValue) SupplierId = supplierId.Value;
+
+            if (SupplierId > 0 && Items.Any())
+                await _receptionService.AutoMapBarcodesAsync(SupplierId, Items);
+
+            await RefreshSuggestionsAsync();
+
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            // ενημέρωσε CanExecute (Save χρειάζεται προμηθευτή)
             ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
         }
 
         private async void SaveMappings()
         {
-            // Safety: πρέπει να υπάρχει επιλεγμένος προμηθευτής
             if (!HasValidSupplier)
             {
                 MessageBox.Show("Επίλεξε προμηθευτή από το dropdown πριν την αποθήκευση.",
@@ -140,7 +192,6 @@ namespace HermesPOS.ViewModels
                 return;
             }
 
-            // Έλεγχος διπλών barcodes σε διαφορετικούς supplier codes
             var withBarcode = Items.Select((item, idx) => new { item, idx })
                                    .Where(x => !string.IsNullOrWhiteSpace(x.item.Barcode))
                                    .ToList();
@@ -167,7 +218,6 @@ namespace HermesPOS.ViewModels
                 return;
             }
 
-            // Προειδοποίηση για κενά barcodes (επιτρέπουμε Draft)
             var missingBarcode = Items.Select((item, idx) => new { item, idx })
                                       .Where(x => string.IsNullOrWhiteSpace(x.item.Barcode))
                                       .ToList();
@@ -187,7 +237,6 @@ namespace HermesPOS.ViewModels
             {
                 if (_currentReceptionId.HasValue)
                 {
-                    // UPDATE υπάρχοντος draft
                     var rec = await _unitOfWork.StockReceptions.GetDraftByIdAsync(_currentReceptionId.Value);
                     if (rec == null)
                     {
@@ -220,8 +269,7 @@ namespace HermesPOS.ViewModels
                 }
                 else
                 {
-                    // ΝΕΟ draft
-                    var mark = "DEV-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    var mark = _currentMark ?? "DEV-" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
                     var exists = await _unitOfWork.StockReceptions.ExistsByMarkAsync(mark);
                     if (exists)
@@ -298,9 +346,63 @@ namespace HermesPOS.ViewModels
                 _currentReceptionId = null;
                 _currentMark = null;
                 Items.Clear();
+                Suggestions.Clear();
+                OnPropertyChanged(nameof(HasSuggestions));
+
                 ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
                 ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
             }
+        }
+
+        private void ClearQr()
+        {
+            QrUrl = string.Empty;
+            OnPropertyChanged(nameof(QrUrl));
+        }
+
+        // -------- ΝΕΑ: helpers για προτάσεις --------
+
+        private async Task RefreshAfterSupplierChangeAsync()
+        {
+            if (SupplierId <= 0 || !Items.Any())
+            {
+                Suggestions.Clear();
+                OnPropertyChanged(nameof(HasSuggestions));
+                return;
+            }
+
+            // PASS 1
+            await _receptionService.AutoMapBarcodesAsync(SupplierId, Items);
+
+            // PASS 2
+            await RefreshSuggestionsAsync();
+
+        }
+
+        private async Task RefreshSuggestionsAsync()
+        {
+            if (SupplierId <= 0) { Suggestions.Clear(); OnPropertyChanged(nameof(HasSuggestions)); return; }
+
+            var props = await _receptionService.SuggestBarcodesAsync(SupplierId, Items);
+
+            Suggestions.Clear();
+            foreach (var (item, barcode, productName) in props)
+                Suggestions.Add(new Proposal(item, barcode, productName));
+
+            OnPropertyChanged(nameof(HasSuggestions));
+        }
+
+        private void ApplySuggestion(Proposal? proposal)
+        {
+            if (proposal == null) return;
+
+            // Ο χρήστης επιβεβαίωσε → γέμισε Barcode στη γραμμή
+            proposal.Item.Barcode = proposal.Barcode;
+
+            // Βγάλε την πρόταση (και τυχόν άλλες για το ίδιο item)
+            var toRemove = Suggestions.Where(p => p.Item == proposal.Item).ToList();
+            foreach (var p in toRemove) Suggestions.Remove(p);
+            OnPropertyChanged(nameof(HasSuggestions));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

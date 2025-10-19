@@ -1,36 +1,152 @@
 ﻿<Window x:Class="HermesPOS.Views.EditProductWindow"
-		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		Title="Επεξεργασία Προϊόντος" Height="400" Width="400">
-	<Grid>
-		<StackPanel Margin="20">
-			<TextBlock Text="Barcode:"/>
-			<TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Επεξεργασία Προϊόντος"
+        Width="560" Height="520"
+        MinWidth="520" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        Background="#FAFAFA">
+    <!-- Global sizing -->
+    <Window.Resources>
+        <!-- Γενικό font για όλα τα controls -->
+        <Style TargetType="Control">
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
 
-			<TextBlock Text="Όνομα Προϊόντος:"/>
-			<TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+        <!-- Labels -->
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
 
-			<TextBlock Text="Τιμή:"/>
-			<TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}"/>
-			
-			<TextBlock Text="Χονδρική Τιμή:"/>
-			<TextBox Text="{Binding WholesalePriceText, UpdateSourceTrigger=PropertyChanged}"/>
+        <!-- Inputs -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
 
-			<TextBlock Text="Απόθεμα:"/>
-			<TextBox Text="{Binding Stock, UpdateSourceTrigger=PropertyChanged}"/>
+        <!-- Buttons -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="#0078D7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#005A9E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#0063B1"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#004F8A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
-			<TextBlock Text="Κατηγορία:"/>
-			<ComboBox ItemsSource="{Binding Categories}" 
-					  SelectedItem="{Binding SelectedCategory}" 
-					  DisplayMemberPath="Name"/>
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="#222"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D5D5D5"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#C7C7C7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
 
-			<TextBlock Text="Προμηθευτής:"/>
-			<ComboBox ItemsSource="{Binding Suppliers}" 
-					  SelectedItem="{Binding SelectedSupplier}" 
-					  DisplayMemberPath="Name"/>
+    <!-- Περιεχόμενο -->
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-			<Button Content="Αποθήκευση" Command="{Binding SaveCommand}" Margin="5"/>
-			<Button Content="Ακύρωση" Command="{Binding CancelCommand}" Margin="5"/>
-		</StackPanel>
-	</Grid>
+        <!-- Φόρμα: 2 στήλες (label/input) -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Barcode -->
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Barcode:" Margin="0,0,12,6"/>
+            <TextBox   Grid.Row="0" Grid.Column="1" Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Όνομα -->
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Όνομα Προϊόντος:" Margin="0,0,12,6"/>
+            <TextBox   Grid.Row="1" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Τιμή -->
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Τιμή:" Margin="0,0,12,6"/>
+            <TextBox   Grid.Row="2" Grid.Column="1" Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Χονδρική -->
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Χονδρική Τιμή:" Margin="0,0,12,6"/>
+            <TextBox   Grid.Row="3" Grid.Column="1" Text="{Binding WholesalePriceText, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Απόθεμα -->
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Απόθεμα:" Margin="0,0,12,6"/>
+            <TextBox   Grid.Row="4" Grid.Column="1" Text="{Binding Stock, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!-- Κατηγορία -->
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Κατηγορία:" Margin="0,0,12,6"/>
+            <ComboBox  Grid.Row="5" Grid.Column="1"
+                       ItemsSource="{Binding Categories}"
+                       SelectedItem="{Binding SelectedCategory}"
+                       DisplayMemberPath="Name"/>
+
+            <!-- Προμηθευτής -->
+            <TextBlock Grid.Row="6" Grid.Column="0" Text="Προμηθευτής:" Margin="0,0,12,6"/>
+            <ComboBox  Grid.Row="6" Grid.Column="1"
+                       ItemsSource="{Binding Suppliers}"
+                       SelectedItem="{Binding SelectedSupplier}"
+                       DisplayMemberPath="Name"/>
+
+            <!-- Rows για το grid -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+        </Grid>
+
+        <!-- Κουμπιά -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Αποθήκευση"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding SaveCommand}"
+                    IsDefault="True"/>
+            <Button Content="Ακύρωση"
+                    Style="{StaticResource SecondaryButton}"
+                    Command="{Binding CancelCommand}"
+                    Margin="0,0,8,0"/>
+        </StackPanel>
+    </Grid>
 </Window>

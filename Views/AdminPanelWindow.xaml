@@ -178,6 +178,68 @@
 
             <!-- 🔹 Καρτέλα Διαχείρισης Κατηγοριών -->
             <TabItem Header="🗂️ Κατηγορίες">
+                <TabItem.Resources>
+                    <!-- 🎨 Στυλ μόνο για αυτή την καρτέλα -->
+                    <Style x:Key="SquareButtonBase" TargetType="Button">
+                        <Setter Property="Height" Value="36"/>
+                        <Setter Property="MinWidth" Value="140"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style x:Key="AddButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
+                        <Setter Property="Background" Value="#2E7D32"/>
+                        <Setter Property="BorderBrush" Value="#1B5E20"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#256D28"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1E5A21"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+
+                    <Style x:Key="EditButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
+                        <Setter Property="Background" Value="#1976D2"/>
+                        <Setter Property="BorderBrush" Value="#0D47A1"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1565C0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0E57AC"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+
+                    <Style x:Key="DeleteButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
+                        <Setter Property="Background" Value="#D32F2F"/>
+                        <Setter Property="BorderBrush" Value="#B71C1C"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#C62828"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#B71C1C"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TabItem.Resources>
+
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -185,27 +247,80 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- 🔹 Λίστα Κατηγοριών -->
-                    <DataGrid Grid.Row="1" 
-                                  ItemsSource="{Binding Categories}" 
-                                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                                  AutoGenerateColumns="False">
+                    <TextBlock Text="Λίστα Κατηγοριών"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   Margin="10,10,10,0"/>
+
+                    <DataGrid Grid.Row="1" Margin="10"
+                  ItemsSource="{Binding Categories}"
+                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  RowHeight="34"
+                  AlternatingRowBackground="#FAFAFA">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="📌 Κατηγορία" Binding="{Binding Name}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <!-- 🔹 Κουμπιά -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                        <Button Content="➕ Προσθήκη" Command="{Binding AddCategoryCommand}" Width="150" Margin="5"/>
-                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditCategoryCommand}" Width="150" Margin="5"/>
-                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteCategoryCommand}" Width="150" Margin="5"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                        <Button Content="➕ Προσθήκη"
+                    Command="{Binding AddCategoryCommand}"
+                    Style="{StaticResource AddButton}"
+                    Margin="6,0"/>
+                        <Button Content="✏️ Επεξεργασία"
+                    Command="{Binding EditCategoryCommand}"
+                    Style="{StaticResource EditButton}"
+                    Margin="6,0"/>
+                        <Button Content="🗑️ Διαγραφή"
+                    Command="{Binding DeleteCategoryCommand}"
+                    Style="{StaticResource DeleteButton}"
+                    Margin="6,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
 
             <!-- 🔹 Καρτέλα Διαχείρισης Προμηθευτών -->
             <TabItem Header="🏭 Προμηθευτές">
+                <TabItem.Resources>
+                    <!-- ίδια στυλ εδώ (ή μπορείς να τα κάνεις λίγο διαφορετικά χρωματικά αν θες) -->
+                    <Style x:Key="SquareButtonBase" TargetType="Button">
+                        <Setter Property="Height" Value="36"/>
+                        <Setter Property="MinWidth" Value="140"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style x:Key="AddButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
+                        <Setter Property="Background" Value="#388E3C"/>
+                        <Setter Property="BorderBrush" Value="#2E7D32"/>
+                    </Style>
+
+                    <Style x:Key="EditButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
+                        <Setter Property="Background" Value="#1976D2"/>
+                        <Setter Property="BorderBrush" Value="#0D47A1"/>
+                    </Style>
+
+                    <Style x:Key="DeleteButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
+                        <Setter Property="Background" Value="#D32F2F"/>
+                        <Setter Property="BorderBrush" Value="#B71C1C"/>
+                    </Style>
+                </TabItem.Resources>
+
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -213,26 +328,42 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- 🔹 Λίστα Προμηθευτών -->
-                    <DataGrid Grid.Row="1" 
-                      ItemsSource="{Binding Suppliers}" 
-                      SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
-                      AutoGenerateColumns="False">
+                    <TextBlock Text="Λίστα Προμηθευτών"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   Margin="10,10,10,0"/>
+
+                    <DataGrid Grid.Row="1" Margin="10"
+                  ItemsSource="{Binding Suppliers}"
+                  SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  RowHeight="34"
+                  AlternatingRowBackground="#FAFAFA">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="🏭 Προμηθευτής" Binding="{Binding Name}" Width="*"/>
-                            <DataGridTextColumn Header="📞 Τηλέφωνο" Binding="{Binding Phone}" Width="150"/>
-                            <DataGridTextColumn Header="📍 Διεύθυνση" Binding="{Binding Address}" Width="200"/>
+                            <DataGridTextColumn Header="📞 Τηλέφωνο" Binding="{Binding Phone}" Width="160"/>
+                            <DataGridTextColumn Header="📍 Διεύθυνση" Binding="{Binding Address}" Width="220"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <!-- 🔹 Κουμπιά -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-                        <Button Content="➕ Προσθήκη" Command="{Binding AddSupplierCommand}" Width="150" Margin="5"/>
-                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditSupplierCommand}" Width="150" Margin="5"/>
-                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteSupplierCommand}" Width="150" Margin="5"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                        <Button Content="➕ Προσθήκη"
+                    Command="{Binding AddSupplierCommand}"
+                    Style="{StaticResource AddButton}"
+                    Margin="6,0"/>
+                        <Button Content="✏️ Επεξεργασία"
+                    Command="{Binding EditSupplierCommand}"
+                    Style="{StaticResource EditButton}"
+                    Margin="6,0"/>
+                        <Button Content="🗑️ Διαγραφή"
+                    Command="{Binding DeleteSupplierCommand}"
+                    Style="{StaticResource DeleteButton}"
+                    Margin="6,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
+
 
             <TabItem Header="🔥 Bestseller Προϊόντα">
                 <Grid>

@@ -32,5 +32,12 @@ namespace HermesPOS.Data.Repositories
         {
             _context.StockReceptions.Update(reception);
         }
+        public async Task<StockReception?> GetByMarkAsync(string mark)
+        {
+            return await _context.StockReceptions
+                .Include(r => r.Items)
+                .FirstOrDefaultAsync(r => r.Mark == mark);
+        }
+
     }
 }

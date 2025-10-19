@@ -5,6 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="800">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
 
     <DockPanel LastChildFill="True" Margin="10" >
         <!-- ΠΑΝΩ: QR URL + Εισαγωγή -->
@@ -26,31 +29,222 @@
               SelectedValue="{Binding SupplierId, Mode=TwoWay}"
               MinWidth="220"/>
 
-            <TextBox Grid.Column="2"
-             Margin="12,0,0,0"
-             MinWidth="200"
-             HorizontalAlignment="Stretch"
-             Text="{Binding QrUrl, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox x:Name="QrTextBox"
+                Grid.Column="2"
+                Margin="12,0,0,0"
+                MinWidth="200"
+                HorizontalAlignment="Stretch"
+                Text="{Binding QrUrl, UpdateSourceTrigger=PropertyChanged}">
+                <TextBox.InputBindings>
+                    <KeyBinding Key="Enter"
+                    Command="{Binding ImportFromQrCommand}" />
+                </TextBox.InputBindings>
+            </TextBox>
 
-            <Button Grid.Column="3"
-            Content="Εισαγωγή"
+            <StackPanel Grid.Column="3"
+            Orientation="Horizontal"
+            Margin="8,0,0,0"
+            VerticalAlignment="Center">
+                <!-- Εισαγωγή -->
+                <Button Content="Εισαγωγή"
             Command="{Binding ImportFromQrCommand}"
-            Margin="8,0,0,0"/>
-        </Grid>
+            Padding="14,6"
+            Width="110"
+            Height="32"
+            FontWeight="SemiBold"
+            Background="#0078D7"
+            Foreground="White"
+            BorderBrush="#005A9E"
+            BorderThickness="1"
+            Cursor="Hand"
+            Margin="0,0,6,0">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#0063B1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Background" Value="#004F8A"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
 
+                <!-- Clear -->
+                <Button Content="Clear"
+            Command="{Binding ClearQrCommand}"
+            Padding="8,4"
+            Width="80"
+            Height="32"
+            FontWeight="SemiBold"
+            Background="#FF4D4D"
+            Foreground="White"
+            BorderBrush="#CC0000"
+            BorderThickness="1"
+            Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                            <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#E60000"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Background" Value="#B30000"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- ΚΑΤΩ: κουμπιά -->
         <StackPanel DockPanel.Dock="Bottom"
-                Orientation="Horizontal"
-                HorizontalAlignment="Right"
-                Margin="0,10,0,0">
+            Orientation="Horizontal"
+            HorizontalAlignment="Right"
+            Margin="0,10,0,0">
+            <!-- Αποθήκευση (πρωτεύον / μπλε) -->
             <Button Content="Αποθήκευση"
-                Command="{Binding SaveMappingsCommand}"
-                Margin="0,0,8,0"/>
+            Command="{Binding SaveMappingsCommand}"
+            Width="120" Height="34"
+            FontWeight="SemiBold"
+            Background="#0078D7" Foreground="White"
+            BorderBrush="#005A9E" BorderThickness="1"
+            Margin="0,0,8,0" Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#0063B1"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#004F8A"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Ολοκλήρωση (Post) — πράσινο -->
             <Button Content="Ολοκλήρωση (Post)"
-                Command="{Binding PostReceptionCommand}" />
+            Command="{Binding PostReceptionCommand}"
+            Width="150" Height="34"
+            FontWeight="SemiBold"
+            Background="#2E7D32" Foreground="White"
+            BorderBrush="#1B5E20" BorderThickness="1"
+            Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1E6B25"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#15561B"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </StackPanel>
 
+        <!-- ΠΡΟΤΑΣΕΙΣ ΠΟΥ ΕΡΧΟΝΤΑΙ ΑΠΟ PASS 2 -->
+        <Border DockPanel.Dock="Bottom"
+            Margin="0,10,0,0"
+            Padding="10"
+            BorderBrush="#DDD"
+            BorderThickness="1"
+            CornerRadius="6"
+            Background="White"
+            Visibility="{Binding HasSuggestions, Converter={StaticResource BoolToVis}}">
+            <StackPanel>
+                <TextBlock Text="Προτάσεις ταύτισης"
+          FontWeight="SemiBold"
+          Margin="0,0,0,6"/>
+
+                <ItemsControl ItemsSource="{Binding Suggestions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,4,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0"
+                  Text="{Binding Item.Description}"
+                  TextTrimming="CharacterEllipsis"/>
+
+                                <TextBlock Grid.Column="1"
+                  Text="{Binding ProductName}"/>
+
+                                <TextBlock Grid.Column="2"
+                  Text="{Binding Barcode}"/>
+
+                                <Button Grid.Column="3"
+               Content="Εφάρμοσε"
+               Padding="8,2"
+               Command="{Binding DataContext.ApplySuggestionCommand,
+                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+               CommandParameter="{Binding}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
         <!-- ΚΕΝΤΡΟ: DataGrid (γεμίζει τον χώρο, έχει δικό του scroll) -->
         <DataGrid ItemsSource="{Binding Items}"
           AutoGenerateColumns="False"
@@ -97,6 +291,7 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
+     
 
     </DockPanel>
 </UserControl>
