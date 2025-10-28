@@ -2,8 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Controls;  // για να αναγνωρίζει το TextBox
+using System.Windows.Input;
+using HermesPOS.Models;
 
 namespace HermesPOS.Views
 {

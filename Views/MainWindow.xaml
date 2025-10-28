@@ -199,11 +199,20 @@
                         <GridViewColumn Header="Ποσότητα" Width="110">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
-                                             Width="70"
-                                             TextAlignment="Center"
-                                             FontSize="16"
-                                             Style="{StaticResource EnterCommitsTextBox}"/>
+                                    <Grid Width="100" HorizontalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Πεδίο ποσότητας -->
+                                        <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                                 Grid.Column="0"
+                                                 TextAlignment="Center"
+                                                 FontSize="16"
+                                                 VerticalContentAlignment="Center"
+                                                Style="{StaticResource EnterCommitsTextBox}"/>
+                                    </Grid>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
