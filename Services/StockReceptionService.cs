@@ -82,6 +82,7 @@ namespace HermesPOS.Services
                     var product = prodByBarcode[item.Barcode!];
                     var codeKey = Norm(item.SupplierCode);
                     if (codeKey.Length == 0) continue;
+                    item.ProductId = product.Id;
 
                     var tuple = (codeKey, product.Id);
                     if (existing.Add(tuple))
@@ -130,6 +131,18 @@ namespace HermesPOS.Services
             if (qrUrl.Contains("e-invoicing.gr", StringComparison.OrdinalIgnoreCase))
             {
                 return await FetchFromEInvoicingPdfAsync(qrUrl);
+            }
+            // μετά τα άλλα checks (sbz, e-invoicing κ.λπ.)
+            if (qrUrl.Contains("epsilondigital.epsilonnet.gr", StringComparison.OrdinalIgnoreCase)
+           || qrUrl.Contains("docviewer/", StringComparison.OrdinalIgnoreCase))
+            {
+                return (false,
+                    "Το QR οδηγεί σε Epsilon Digital DocViewer.\n" +
+                    "Η αυτόματη ανάγνωση από Epsilon δεν υποστηρίζεται.\n\n" +
+                    "👉 Χρησιμοποίησε το QR της ΑΑΔΕ ή κατέβασε το PDF και δώσ’ το χειροκίνητα.",
+                    new List<StockReceptionItem>(),
+                    null,
+                    null);
             }
 
             // Αν μας έδωσαν μόνο το token, φτιάξε το πλήρες URL
@@ -268,7 +281,7 @@ namespace HermesPOS.Services
             return (true, $"MARK: {mark}", items, supplierId, mark);
         }
         private async Task<(bool ok, string message, List<StockReceptionItem> items, int? supplierId, string? mark)>
-     FetchFromSbzAsync(string url)
+            FetchFromSbzAsync(string url)
         {
             var items = new List<StockReceptionItem>();
             int? supplierId = null;
@@ -436,6 +449,7 @@ namespace HermesPOS.Services
                             !string.IsNullOrWhiteSpace(bc))
                         {
                             it.Barcode = bc;
+                            it.ProductId = pid;
                             filled++;
                         }
                     }
@@ -486,7 +500,7 @@ namespace HermesPOS.Services
         }
 
         private async Task<(bool ok, string message, List<StockReceptionItem> items, int? supplierId, string? mark)>
-FetchFromEInvoicingPdfAsync(string url)
+            FetchFromEInvoicingPdfAsync(string url)
         {
             var items = new List<StockReceptionItem>();
 
@@ -522,7 +536,7 @@ FetchFromEInvoicingPdfAsync(string url)
         }
 
         private (bool ok, string message, List<StockReceptionItem> items, int? supplierId, string? mark)
-        ParseEInvoicingPdfBytes(byte[] pdfBytes, string markOrUrl)
+            ParseEInvoicingPdfBytes(byte[] pdfBytes, string markOrUrl)
         {
             var empty = new List<StockReceptionItem>();
 
@@ -567,8 +581,8 @@ FetchFromEInvoicingPdfAsync(string url)
             }
         }
         private static List<StockReceptionItem> MergeItems(
-    List<StockReceptionItem> a,
-    List<StockReceptionItem> b)
+             List<StockReceptionItem> a,
+             List<StockReceptionItem> b)
         {
             var result = new List<StockReceptionItem>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -765,15 +779,6 @@ FetchFromEInvoicingPdfAsync(string url)
             }
 
             return items;
-        }
-
-
-
-        // μικρό helper – δέχεται 12, 12.00, 1,00 κλπ
-        private static bool IsNumberLike(string s)
-        {
-            s = s.Trim();
-            return Regex.IsMatch(s, @"^\d+([.,]\d+)?$");
         }
 
         private static string NormalizeGreek(string s)

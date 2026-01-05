@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace HermesPOS.Models
 {
-    public class StockReceptionItem : INotifyPropertyChanged
+    public class StockReceptionItem : INotifyPropertyChanged //Κάθε παραλαβή (τιμολόγιο) έχει πολλά StockReceptionItem
     {
         public int Id { get; set; }
         public int StockReceptionId { get; set; }
