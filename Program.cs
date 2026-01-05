@@ -27,7 +27,7 @@ namespace HermesPOS
 				{
 					var context = services.GetRequiredService<ApplicationDbContext>();
 					context.Database.Migrate(); // Εφαρμογή των Migrations αν δεν έχουν γίνει
-					SeedData.Initialize(services); // Κλήση της μεθόδου SeedData για αρχικοποίηση δεδομένων
+					//SeedData.Initialize(services); // Κλήση της μεθόδου SeedData για αρχικοποίηση δεδομένων
 				}
 				catch (Exception ex)
 				{
