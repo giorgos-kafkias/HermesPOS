@@ -273,22 +273,30 @@ namespace HermesPOS.ViewModels
 			}
 		}
 
-		private void ApplyProductFilter()
-		{
-			FilteredProducts.Clear();
+        private void ApplyProductFilter()
+        {
+            FilteredProducts.Clear();
 
-			var filtered = string.IsNullOrWhiteSpace(SearchText)
-				? Products
-				: new ObservableCollection<Product>(
-					Products.Where(p => p.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-										(p.Category?.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-										(p.Supplier?.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false)));
+            var term = (SearchText ?? "").Trim();
 
-			foreach (var product in filtered)
-			{
-				FilteredProducts.Add(product);
-			}
-		}
+            var filtered = string.IsNullOrWhiteSpace(term)
+                ? Products
+                : Products.Where(p =>
+                    (!string.IsNullOrWhiteSpace(p.Name) &&
+                     p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    ||
+                    // ✅ Barcode search (δουλεύει είτε Barcode είναι string είτε numeric)
+                    ((p.Barcode?.ToString() ?? "").Contains(term, StringComparison.OrdinalIgnoreCase))
+                    ||
+                    (p.Category?.Name?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
+                    ||
+                    (p.Supplier?.Name?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
+                );
+
+            foreach (var product in filtered)
+                FilteredProducts.Add(product);
+        }
+
         private async void ToggleActive()
         {
             if (SelectedProduct == null) return;
