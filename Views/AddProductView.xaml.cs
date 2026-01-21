@@ -19,5 +19,14 @@ namespace HermesPOS.Views
 			Regex regex = new Regex(@"^[0-9]*[.,]?[0-9]*$"); // Επιτρέπει αριθμούς και ένα δεκαδικό σημείο
 			e.Handled = !regex.IsMatch(e.Text); // Απορρίπτει μη επιτρεπτούς χαρακτήρες
 		}
-	}
+        private void Barcode_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;     // 🚫 μην περάσει το Enter πιο κάτω
+                NameTextBox.Focus();  // ✅ πήγαινε στο όνομα
+            }
+        }
+
+    }
 }

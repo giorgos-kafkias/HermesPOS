@@ -110,11 +110,13 @@
             <!-- Barcode -->
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Barcode:" Margin="0,0,12,6"/>
             <TextBox   Grid.Row="0" Grid.Column="1"
-                       Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"/>
+                       Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
+                       PreviewKeyDown="Barcode_PreviewKeyDown"/>
 
             <!-- Όνομα Προϊόντος -->
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Όνομα Προϊόντος:" Margin="0,0,12,6"/>
             <TextBox   Grid.Row="1" Grid.Column="1"
+                       x:Name="NameTextBox"
                        Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
 
             <!-- Τιμή -->
@@ -154,7 +156,7 @@
             <Button Content="Προσθήκη Προϊόντος"
                     Style="{StaticResource PrimaryButton}"
                     Command="{Binding SaveProductCommand}"
-                    IsDefault="True"/>
+                    />
         </StackPanel>
     </Grid>
 </Window>
