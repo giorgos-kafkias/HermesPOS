@@ -109,7 +109,8 @@
 
             <!-- Barcode -->
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Barcode:" Margin="0,0,12,6"/>
-            <TextBox   Grid.Row="0" Grid.Column="1"
+            <TextBox   x:Name="BarcodeTextBox"
+                       Grid.Row="0" Grid.Column="1"
                        Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
                        PreviewKeyDown="Barcode_PreviewKeyDown"/>
 
@@ -156,6 +157,7 @@
             <Button Content="Προσθήκη Προϊόντος"
                     Style="{StaticResource PrimaryButton}"
                     Command="{Binding SaveProductCommand}"
+                    IsDefault="True"
                     />
         </StackPanel>
     </Grid>
