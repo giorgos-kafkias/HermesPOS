@@ -71,6 +71,44 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
+        <!-- 🟢 Προσθήκη -->
+        <Style x:Key="AddButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#43A047"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#2E7D32"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 🔵 Επεξεργασία -->
+        <Style x:Key="EditButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#2196F3"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1E88E5"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#1565C0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 🔴 Διαγραφή -->
+        <Style x:Key="DeleteButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#F44336"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E53935"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#C62828"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -154,10 +192,10 @@
 
                     <!-- 🔹 Κουμπιά -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
-                        <Button Content="➕ Προσθήκη" Command="{Binding AddProductCommand}" Width="150" Margin="5"/>
-                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditProductCommand}" Width="150" Margin="5"/>
+                        <Button Content="➕ Προσθήκη" Command="{Binding AddProductCommand}" Style="{StaticResource AddButtonStyle}" Width="150" Height="40" Margin="5"/>
+                        <Button Content="✏️ Επεξεργασία" Command="{Binding EditProductCommand}" Style="{StaticResource EditButtonStyle}" Width="150" Height="40" Margin="5"/>
                         <!-- Απενεργοποίηση/Ενεργοποίηση -->
-                        <Button Command="{Binding ToggleActiveCommand}" Width="150" Margin="5">
+                        <Button Command="{Binding ToggleActiveCommand}" Width="150" Height="40" Margin="5">
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Content" Value="⏸️ Απενεργοποίηση"/>
@@ -170,7 +208,7 @@
                             </Button.Style>
                         </Button>
 
-                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteProductCommand}" Width="150" Margin="5"/>
+                        <Button Content="🗑️ Διαγραφή" Command="{Binding DeleteProductCommand}" Style="{StaticResource DeleteButtonStyle}" Width="150" Height="40" Margin="5"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -198,45 +236,6 @@
                                 </ControlTemplate>
                             </Setter.Value>
                         </Setter>
-                    </Style>
-
-                    <Style x:Key="AddButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
-                        <Setter Property="Background" Value="#2E7D32"/>
-                        <Setter Property="BorderBrush" Value="#1B5E20"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#256D28"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#1E5A21"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-
-                    <Style x:Key="EditButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
-                        <Setter Property="Background" Value="#1976D2"/>
-                        <Setter Property="BorderBrush" Value="#0D47A1"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#1565C0"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#0E57AC"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-
-                    <Style x:Key="DeleteButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
-                        <Setter Property="Background" Value="#D32F2F"/>
-                        <Setter Property="BorderBrush" Value="#B71C1C"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#C62828"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#B71C1C"/>
-                            </Trigger>
-                        </Style.Triggers>
                     </Style>
                 </TabItem.Resources>
 
@@ -267,16 +266,16 @@
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                         <Button Content="➕ Προσθήκη"
                     Command="{Binding AddCategoryCommand}"
-                    Style="{StaticResource AddButton}"
-                    Margin="6,0"/>
+                    Style="{StaticResource AddButtonStyle}"
+                    Width="150" Height="40" Margin="6,0"/>
                         <Button Content="✏️ Επεξεργασία"
                     Command="{Binding EditCategoryCommand}"
-                    Style="{StaticResource EditButton}"
-                    Margin="6,0"/>
+                    Style="{StaticResource EditButtonStyle}"
+                    Width="150" Height="40" Margin="6,0"/>
                         <Button Content="🗑️ Διαγραφή"
                     Command="{Binding DeleteCategoryCommand}"
-                    Style="{StaticResource DeleteButton}"
-                    Margin="6,0"/>
+                    Style="{StaticResource DeleteButtonStyle}"
+                    Width="150" Height="40" Margin="6,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -303,21 +302,6 @@
                                 </ControlTemplate>
                             </Setter.Value>
                         </Setter>
-                    </Style>
-
-                    <Style x:Key="AddButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
-                        <Setter Property="Background" Value="#388E3C"/>
-                        <Setter Property="BorderBrush" Value="#2E7D32"/>
-                    </Style>
-
-                    <Style x:Key="EditButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
-                        <Setter Property="Background" Value="#1976D2"/>
-                        <Setter Property="BorderBrush" Value="#0D47A1"/>
-                    </Style>
-
-                    <Style x:Key="DeleteButton" TargetType="Button" BasedOn="{StaticResource SquareButtonBase}">
-                        <Setter Property="Background" Value="#D32F2F"/>
-                        <Setter Property="BorderBrush" Value="#B71C1C"/>
                     </Style>
                 </TabItem.Resources>
 
@@ -349,17 +333,17 @@
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
                         <Button Content="➕ Προσθήκη"
-                    Command="{Binding AddSupplierCommand}"
-                    Style="{StaticResource AddButton}"
-                    Margin="6,0"/>
+                            Command="{Binding AddSupplierCommand}"
+                            Style="{StaticResource AddButtonStyle}"
+                            Width="150" Height="40" Margin="6,0"/>
                         <Button Content="✏️ Επεξεργασία"
-                    Command="{Binding EditSupplierCommand}"
-                    Style="{StaticResource EditButton}"
-                    Margin="6,0"/>
+                            Command="{Binding EditSupplierCommand}"
+                            Style="{StaticResource EditButtonStyle}"
+                            Width="150" Height="40" Margin="6,0"/>
                         <Button Content="🗑️ Διαγραφή"
-                    Command="{Binding DeleteSupplierCommand}"
-                    Style="{StaticResource DeleteButton}"
-                    Margin="6,0"/>
+                            Command="{Binding DeleteSupplierCommand}"
+                            Style="{StaticResource DeleteButtonStyle}"
+                            Width="150" Height="40" Margin="6,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
