@@ -97,7 +97,16 @@ namespace HermesPOS.ViewModels
 				return;
 			}
 
-			decimal? wholesalePrice = null;
+            var normalizedBarcode = Barcode.Trim();
+
+            var existingProduct = await _unitOfWork.Products.GetByBarcodeAsync(normalizedBarcode);
+            if (existingProduct != null)
+            {
+                MessageBox.Show("Υπάρχει ήδη προϊόν με αυτό το barcode!", "Διπλό barcode", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            decimal? wholesalePrice = null;
 
 			if (!string.IsNullOrWhiteSpace(WholesalePriceText))
 			{
