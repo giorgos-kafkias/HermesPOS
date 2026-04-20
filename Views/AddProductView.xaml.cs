@@ -12,9 +12,14 @@ namespace HermesPOS.Views
 			InitializeComponent();
 			DataContext = viewModel;
 			viewModel.CloseAction = () => this.Close(); // ✅ Αναθέτουμε το κλείσιμο στο ViewModel
-		}
-
-		private void DecimalValidationTextBox(object sender, TextCompositionEventArgs e)
+            Loaded += AddProductView_Loaded;
+        }
+        private void AddProductView_Loaded(object sender, RoutedEventArgs e)
+        {
+            BarcodeTextBox.Focus();
+            Keyboard.Focus(BarcodeTextBox); // extra safe
+        }
+        private void DecimalValidationTextBox(object sender, TextCompositionEventArgs e)
 		{
 			Regex regex = new Regex(@"^[0-9]*[.,]?[0-9]*$"); // Επιτρέπει αριθμούς και ένα δεκαδικό σημείο
 			e.Handled = !regex.IsMatch(e.Text); // Απορρίπτει μη επιτρεπτούς χαρακτήρες
