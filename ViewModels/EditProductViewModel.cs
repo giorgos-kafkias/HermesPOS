@@ -1,10 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using HermesPOS.Data.Repositories;
+using HermesPOS.Helpers;
+using HermesPOS.Models;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using HermesPOS.Data.Repositories;
-using HermesPOS.Models;
 
 namespace HermesPOS.ViewModels
 {
@@ -13,8 +14,8 @@ namespace HermesPOS.ViewModels
 		private readonly IUnitOfWork _unitOfWork;
 		private string _barcode;
 		private string _name;
-		private decimal _price;
-		private int _stock;
+        private string _priceText;
+        private int _stock;
 		private Category _selectedCategory;
 		private Supplier _selectedSupplier;
 		private string _wholesalePriceText;
@@ -41,17 +42,17 @@ namespace HermesPOS.ViewModels
 			}
 		}
 
-		public decimal Price
-		{
-			get => _price;
-			set
-			{
-				_price = value;
-				OnPropertyChanged(nameof(Price));
-			}
-		}
+        public string PriceText
+        {
+            get => _priceText;
+            set
+            {
+                _priceText = value;
+                OnPropertyChanged(nameof(PriceText));
+            }
+        }
 
-		public string WholesalePriceText
+        public string WholesalePriceText
 		{
 			get => _wholesalePriceText;
 			set
@@ -114,8 +115,8 @@ namespace HermesPOS.ViewModels
 			// ✅ Γεμίζουμε τις τιμές
 			Barcode = product.Barcode;
 			Name = product.Name;
-			Price = product.Price;
-			WholesalePriceText = product.WholesalePrice?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+            PriceText = product.Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+            WholesalePriceText = product.WholesalePrice?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 			Stock = product.Stock;
 			SelectedCategory = product.Category;
 			SelectedSupplier = product.Supplier;
@@ -141,25 +142,35 @@ namespace HermesPOS.ViewModels
 
 		private async Task SaveProduct()
 		{
-			if (string.IsNullOrWhiteSpace(Barcode) || string.IsNullOrWhiteSpace(Name) || Price <= 0 || Stock < 0 || SelectedCategory == null || SelectedSupplier == null)
-			{
-				MessageBox.Show("Παρακαλώ συμπληρώστε όλα τα πεδία σωστά!", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Warning);
-				return;
-			}
-			decimal? wholesalePrice = null;
+            if (string.IsNullOrWhiteSpace(Barcode) ||
+                string.IsNullOrWhiteSpace(Name) ||
+                Stock < 0 ||
+                SelectedCategory == null ||
+                SelectedSupplier == null)
+            {
+                MessageBox.Show("Παρακαλώ συμπληρώστε όλα τα πεδία σωστά!", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-			if (!string.IsNullOrWhiteSpace(WholesalePriceText))
-			{
-				var clean = WholesalePriceText.Replace(',', '.');
-				if (decimal.TryParse(clean, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-					wholesalePrice = parsed;
-			}
+            if (!DecimalHelper.TryParseFlexibleDecimal(PriceText, out var parsedPrice) || parsedPrice <= 0)
+            {
+                MessageBox.Show("Λάθος τιμή!", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-			// ✅ Ενημέρωση του προϊόντος
-			Product.Barcode = Barcode;
+            decimal? wholesalePrice = null;
+
+            if (!string.IsNullOrWhiteSpace(WholesalePriceText) &&
+                DecimalHelper.TryParseFlexibleDecimal(WholesalePriceText, out var parsedWholesale))
+            {
+                wholesalePrice = parsedWholesale;
+            }
+
+            // ✅ Ενημέρωση του προϊόντος
+            Product.Barcode = Barcode;
 			Product.Name = Name;
-			Product.Price = Price;
-			Product.WholesalePrice = wholesalePrice;
+			Product.Price = parsedPrice;
+            Product.WholesalePrice = wholesalePrice;
 			Product.Stock = Stock;
 			Product.CategoryId = SelectedCategory.Id;
 			Product.SupplierId = SelectedSupplier.Id;

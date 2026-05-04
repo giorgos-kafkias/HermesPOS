@@ -101,8 +101,7 @@
 
             <!-- Τιμή -->
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Τιμή:" Margin="0,0,12,6"/>
-            <TextBox   Grid.Row="2" Grid.Column="1" Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}"/>
-
+            <TextBox Grid.Row="2" Grid.Column="1"   Text="{Binding PriceText, UpdateSourceTrigger=PropertyChanged}"/>
             <!-- Χονδρική -->
             <TextBlock Grid.Row="3" Grid.Column="0" Text="Χονδρική Τιμή:" Margin="0,0,12,6"/>
             <TextBox   Grid.Row="3" Grid.Column="1" Text="{Binding WholesalePriceText, UpdateSourceTrigger=PropertyChanged}"/>

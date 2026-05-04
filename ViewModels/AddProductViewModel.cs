@@ -1,4 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿using HermesPOS.Data.Repositories;
+using HermesPOS.Helpers;
+using HermesPOS.Models;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
@@ -6,8 +9,6 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using HermesPOS.Data.Repositories;
-using HermesPOS.Models;
 
 namespace HermesPOS.ViewModels
 {
@@ -25,24 +26,19 @@ namespace HermesPOS.ViewModels
 				OnPropertyChanged(nameof(Barcode));
 			}
 		}
-		private string _priceText;
-		// Το `PriceText` χρησιμοποιείται για την εισαγωγή δεδομένων στο TextBox.
-		public string PriceText
-		{
-			get => _priceText;
-			set
-			{
-				_priceText = value;
-				// Προσπαθεί να μετατρέψει το `PriceText` σε `decimal` με βάση την αγγλική κουλτούρα (δεκαδικός χωριστήρας = ".")
-				if (decimal.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal parsedValue))
-				{
-					Price = parsedValue; // Αν η μετατροπή πετύχει, αποθηκεύει την αριθμητική τιμή στο `Price`
-				}
-				OnPropertyChanged(nameof(PriceText));  // Ενημέρωση UI
-			}
-		}
 
-		private string _wholesalePriceText;
+        private string _priceText;
+        public string PriceText
+        {
+            get => _priceText;
+            set
+            {
+                _priceText = value;
+                OnPropertyChanged(nameof(PriceText));
+            }
+        }
+
+        private string _wholesalePriceText;
 		public string WholesalePriceText
 		{
 			get => _wholesalePriceText;
@@ -106,18 +102,23 @@ namespace HermesPOS.ViewModels
                 return;
             }
 
+            if (!DecimalHelper.TryParseFlexibleDecimal(PriceText, out var parsedPrice))
+            {
+                MessageBox.Show("Λάθος τιμή");
+                return;
+            }
+
+            Price = parsedPrice;
+
             decimal? wholesalePrice = null;
 
-			if (!string.IsNullOrWhiteSpace(WholesalePriceText))
-			{
-				var clean = WholesalePriceText.Replace(',', '.');
+            if (DecimalHelper.TryParseFlexibleDecimal(WholesalePriceText, out var parsed))
+            {
+                wholesalePrice = parsed;
+            }
 
-				if (decimal.TryParse(clean, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
-					wholesalePrice = parsed;
-			}
-
-			// Δημιουργία νέου προϊόντος με τα δεδομένα από το ViewModel
-			var newProduct = new Product
+            // Δημιουργία νέου προϊόντος με τα δεδομένα από το ViewModel
+            var newProduct = new Product
 			{
 				Barcode = Barcode,
 				Name = Name,
