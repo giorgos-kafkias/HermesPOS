@@ -45,8 +45,9 @@ namespace HermesPOS.ViewModels
 			private int _quantity;
 			private decimal _price;
 			private readonly Action _onQuantityOrPriceChanged;
-
-			public bool HasWholesaleOption => Product.WholesalePrice.HasValue;
+            public ICommand IncreaseQuantityCommand { get; }
+            public ICommand DecreaseQuantityCommand { get; }
+            public bool HasWholesaleOption => Product.WholesalePrice.HasValue;
 
 			private bool _useWholesalePrice;
 			public bool UseWholesalePrice
@@ -140,22 +141,46 @@ namespace HermesPOS.ViewModels
 
 			public decimal TotalPrice => Quantity * Price;
 
-			public CartItem(Product product, Action onQuantityOrPriceChanged)
-			{
-				Product = product;
-				_quantity = 1;
-				_price = product.Price; // Ξεκινάμε με λιανική
-				_priceString = _price.ToString("0.00"); // για να γεμίζει το textbox
-				_onQuantityOrPriceChanged = onQuantityOrPriceChanged;
-			}
+            public CartItem(Product product, Action onQuantityOrPriceChanged)
+            {
+                Product = product;
+                _quantity = 1;
+                _price = product.Price;
+                _priceString = _price.ToString("0.00");
+                _onQuantityOrPriceChanged = onQuantityOrPriceChanged;
 
-			public event PropertyChangedEventHandler PropertyChanged;
+                IncreaseQuantityCommand = new RelayCommand(IncreaseQuantity);
+                DecreaseQuantityCommand = new RelayCommand(DecreaseQuantity);
+            }
+            private void IncreaseQuantity()
+            {
+                if (Quantity < Product.Stock)
+                {
+                    Quantity++;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        $"Το μέγιστο διαθέσιμο απόθεμα είναι {Product.Stock}.",
+                        "Περιορισμός αποθέματος",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+
+            private void DecreaseQuantity()
+            {
+                if (Quantity > 1)
+                {
+                    Quantity--;
+                }
+            }
+            public event PropertyChangedEventHandler PropertyChanged;
 			protected void OnPropertyChanged(string propertyName) =>
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
-
-		public decimal TotalPrice
+        public decimal TotalPrice
 		{
 			get => _totalPrice;
 			set

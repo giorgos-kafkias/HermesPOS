@@ -196,22 +196,45 @@
                         </GridViewColumn>
 
                         <!-- Ποσότητα -->
-                        <GridViewColumn Header="Ποσότητα" Width="110">
+                        <GridViewColumn Header="Ποσότητα" Width="170">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Grid Width="100" HorizontalAlignment="Center">
+                                    <Grid Width="160" HorizontalAlignment="Center">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="35"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="35"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Πεδίο ποσότητας -->
+                                        <!-- Μείωση -->
+                                        <Button Content="−"
+                                            Grid.Column="0"
+                                            Command="{Binding DecreaseQuantityCommand}"
+                                            FontSize="18"
+                                            Foreground="White"
+                                            Background="Black"
+                                            Width="30"
+                                            Height="30"
+                                            Padding="0"/>
+
+                                        <!-- Ποσότητα -->
                                         <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
-                                                 Grid.Column="0"
-                                                 TextAlignment="Center"
-                                                 FontSize="16"
-                                                 VerticalContentAlignment="Center"
-                                                Style="{StaticResource EnterCommitsTextBox}"/>
+                                            Grid.Column="1"
+                                            TextAlignment="Center"
+                                            FontSize="16"
+                                            VerticalContentAlignment="Center"
+                                            Style="{StaticResource EnterCommitsTextBox}"/>
+
+                                        <!-- Αύξηση -->
+                                        <Button Content="+"
+                                            Grid.Column="2"
+                                            Command="{Binding IncreaseQuantityCommand}"
+                                            FontSize="18"
+                                            Foreground="White"
+                                            Background="Black"
+                                            Width="30"
+                                            Height="30"
+                                            Padding="0"/>
                                     </Grid>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
