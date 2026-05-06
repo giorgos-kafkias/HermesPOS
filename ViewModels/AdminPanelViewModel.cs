@@ -44,8 +44,8 @@ namespace HermesPOS.ViewModels
 			}
 		}
 
-		//αναζήτηση στα προιοντα
-		private string _searchText;
+        //αναζήτηση στα προιοντα
+        private string _searchText;
 		public string SearchText
 		{
 			get => _searchText;
@@ -97,7 +97,7 @@ namespace HermesPOS.ViewModels
 		public ICommand EditSupplierCommand { get; }
 		public ICommand DeleteSupplierCommand { get; }
         public ICommand ToggleActiveCommand { get; }
-
+        public ICommand ExportSupplierProductsCommand { get; }
 
 
         public AdminPanelViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
@@ -126,6 +126,7 @@ namespace HermesPOS.ViewModels
 			LowStockViewModel = serviceProvider.GetRequiredService<LowStockProductsViewModel>();
 			ReceiveStockViewModel = serviceProvider.GetRequiredService<ReceiveStockViewModel>();
             QrReceptionViewModel = _serviceProvider.GetRequiredService<QrReceptionViewModel>();
+            ExportSupplierProductsCommand = new RelayCommand( ExportSupplierProducts,() => SelectedSupplier != null);
         }
 
 		private async Task LoadData()
@@ -165,7 +166,8 @@ namespace HermesPOS.ViewModels
 			((RelayCommand)DeleteCategoryCommand).RaiseCanExecuteChanged();
 			((RelayCommand)EditSupplierCommand).RaiseCanExecuteChanged();
 			((RelayCommand)DeleteSupplierCommand).RaiseCanExecuteChanged();
-		}
+            ((RelayCommand)ExportSupplierProductsCommand).RaiseCanExecuteChanged();
+        }
 
 		private void AddProduct()
 		{
@@ -272,7 +274,35 @@ namespace HermesPOS.ViewModels
 				await LoadData();
 			}
 		}
+        private void ExportSupplierProducts()
+        {
+            if (SelectedSupplier == null) return;
 
+            var supplierProducts = Products
+                .Where(p => p.SupplierId == SelectedSupplier.Id)
+                .OrderBy(p => p.Name)
+                .ToList();
+
+            if (!supplierProducts.Any())
+            {
+                MessageBox.Show(
+                    "Δεν βρέθηκαν προϊόντα για τον συγκεκριμένο προμηθευτή.",
+                    "Πληροφορία",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            string fileName = $"Products_{SelectedSupplier.Name}.xlsx";
+
+            ExcelExportHelper.ExportToExcel(supplierProducts, fileName);
+
+            MessageBox.Show(
+                $"Η εξαγωγή ολοκληρώθηκε:\n{fileName}",
+                "Επιτυχία",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
         private void ApplyProductFilter()
         {
             FilteredProducts.Clear();

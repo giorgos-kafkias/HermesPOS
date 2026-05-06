@@ -142,11 +142,38 @@
                     </Grid.RowDefinitions>
 
                     <!-- 🔍 Αναζήτηση -->
-                    <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
-                        <TextBlock Text="🔍 Αναζήτηση:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <TextBox Width="300" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                    </StackPanel>
+                    <Grid Margin="10" Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
+                        <!-- 🔍 Αναζήτηση -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🔍 Αναζήτηση:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBox Width="300"
+                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <!-- 🏭 Επιλογή προμηθευτή -->
+                        <ComboBox Grid.Column="1"
+              Width="200"
+              ItemsSource="{Binding Suppliers}"
+              SelectedItem="{Binding SelectedSupplier}"
+              DisplayMemberPath="Name"
+              Margin="10,0"/>
+
+                        <!-- 📄 Εκτύπωση -->
+                        <Button Grid.Column="2"
+            Content="📄 Εκτύπωση Προιόντων"
+            Command="{Binding ExportSupplierProductsCommand}"
+             Foreground="White"
+Background="Black"
+            Width="150"
+            Height="34"
+            Margin="10,0"/>
+                    </Grid>
                     <!-- 🔹 Λίστα Προϊόντων -->
                     <DataGrid x:Name="ProductsDataGrid"
                   Grid.Row="1"
