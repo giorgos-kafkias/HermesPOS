@@ -100,7 +100,7 @@
         </Grid.RowDefinitions>
 
         <!-- Admin Login -->
-        <Button Content="Admin Login"
+        <Button Content="Αποσύνδεση"
                 Width="110" Height="34"
                 Click="OpenAdminLogin_Click"
                 HorizontalAlignment="Left" Grid.Row="0"/>
@@ -127,15 +127,15 @@
                     Focusable="False" IsTabStop="False">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="#C62828" CornerRadius="6">
+                        <Border x:Name="border" Background="#424242" CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#A61E1E"/>
+                                <Setter TargetName="border" Property="Background" Value="#303030"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#8B1C1C"/>
+                                <Setter TargetName="border" Property="Background" Value="#212121"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
@@ -260,10 +260,29 @@
                         <GridViewColumn Header="Διαγραφή" Width="90">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="❌" Width="34" Height="34"
+                                    <Button Content="❌" Background="#C62828" Width="34" Height="34"
                                             HorizontalAlignment="Center"
                                             Command="{Binding DataContext.RemoveProductCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="border" Background="#C62828" CornerRadius="6">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="border" Property="Background" Value="#A61E1E"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="border" Property="Background" Value="#8B1C1C"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter TargetName="border" Property="Background" Value="#B0BEC5"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template> 
+                                    </Button>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

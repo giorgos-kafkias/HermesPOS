@@ -72,6 +72,7 @@ namespace HermesPOS.ViewModels
         public ICommand RemoveLineCommand { get; }
         public ICommand ApplySuggestionCommand { get; }
         public ICommand ClearQrCommand { get; }
+        public ICommand DeleteDraftCommand { get; }
 
 
         public QrReceptionViewModel(IUnitOfWork unitOfWork, IStockReceptionService receptionService)
@@ -85,6 +86,7 @@ namespace HermesPOS.ViewModels
             RemoveLineCommand = new RelayCommand<StockReceptionItem>(RemoveLine);
             ApplySuggestionCommand = new RelayCommand<Proposal>(ApplySuggestion);
             ClearQrCommand = new RelayCommand(ClearQr);
+            DeleteDraftCommand = new RelayCommand(DeleteDraft);
 
             _ = LoadSuppliersAsync();
         }
@@ -403,6 +405,60 @@ namespace HermesPOS.ViewModels
             var toRemove = Suggestions.Where(p => p.Item == proposal.Item).ToList();
             foreach (var p in toRemove) Suggestions.Remove(p);
             OnPropertyChanged(nameof(HasSuggestions));
+        }
+        private async void DeleteDraft()
+        {
+            if (!_currentReceptionId.HasValue)
+            {
+                MessageBox.Show(
+                    "Δεν υπάρχει draft για διαγραφή.",
+                    "Διαγραφή",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
+            var result = MessageBox.Show(
+                "Θέλεις σίγουρα να διαγράψεις το draft;",
+                "Επιβεβαίωση",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes)
+                return;
+
+            try
+            {
+                await _unitOfWork.StockReceptions.DeleteDraftAsync(_currentReceptionId.Value);
+
+                await _unitOfWork.CompleteAsync();
+
+                _currentReceptionId = null;
+                _currentMark = null;
+
+                Items.Clear();
+                Suggestions.Clear();
+
+                OnPropertyChanged(nameof(HasSuggestions));
+
+                MessageBox.Show(
+                    "Το draft διαγράφηκε.",
+                    "Διαγραφή",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Σφάλμα",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

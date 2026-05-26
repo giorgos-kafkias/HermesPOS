@@ -130,6 +130,14 @@
             HorizontalAlignment="Right"
             Margin="0,10,0,0">
             <!-- Αποθήκευση (πρωτεύον / μπλε) -->
+            <Button Content="Διαγραφή Draft"
+            Command="{Binding DeleteDraftCommand}"
+            Width="150" Height="34"
+            FontWeight="SemiBold"
+            Background="#D32F2F"
+            Foreground="White"
+            BorderBrush="#B71C1C"
+            Margin="0,0,8,0"/>
             <Button Content="Αποθήκευση"
             Command="{Binding SaveMappingsCommand}"
             Width="120" Height="34"

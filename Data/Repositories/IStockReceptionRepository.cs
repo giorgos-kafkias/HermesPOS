@@ -11,5 +11,6 @@ namespace HermesPOS.Data.Repositories
         Task<StockReception?> GetDraftByIdAsync(int id);
         Task<StockReception?> GetByMarkAsync(string mark);
         void Update(StockReception reception); // χωρίς SaveChanges
+        Task DeleteDraftAsync(int id);
     }
 }

@@ -38,6 +38,22 @@ namespace HermesPOS.Data.Repositories
                 .Include(r => r.Items)
                 .FirstOrDefaultAsync(r => r.Mark == mark);
         }
+        public async Task DeleteDraftAsync(int id)
+        {
+            var reception = await _context.StockReceptions
+                .Include(r => r.Items)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
+            if (reception == null)
+                return;
+
+            // Ασφάλεια: διαγράφουμε μόνο Draft
+            if (reception.Status != ReceptionStatus.Draft)
+                throw new InvalidOperationException("Μόνο draft παραλαβές διαγράφονται.");
+
+            _context.StockReceptionItems.RemoveRange(reception.Items);
+
+            _context.StockReceptions.Remove(reception);
+        }
     }
 }
