@@ -15,8 +15,8 @@ namespace HermesPOS.ViewModels
 	public class AddProductViewModel : INotifyPropertyChanged
 	{
 		private readonly IUnitOfWork _unitOfWork;
-		private string _barcode;
 
+		private string _barcode;
 		public string Barcode
 		{
 			get => _barcode;
@@ -49,14 +49,50 @@ namespace HermesPOS.ViewModels
 			}
 		}
 
-		public string Name { get; set; }
-		public decimal Price { get; private set; } // Η αριθμητική τιμή της τιμής του προϊόντος. Κρατάει την τελική τιμή που θα αποθηκευτεί στη βάση.
-		public int Stock { get; set; }
-		public ObservableCollection<Category> Categories { get; set; }
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                OnPropertyChanged(nameof(Name));
+            }
+        }
+        public decimal Price { get; private set; } // Η αριθμητική τιμή της τιμής του προϊόντος. Κρατάει την τελική τιμή που θα αποθηκευτεί στη βάση.
+        private int _stock;
+        public int Stock
+        {
+            get => _stock;
+            set
+            {
+                _stock = value;
+                OnPropertyChanged(nameof(Stock));
+            }
+        }
+        public ObservableCollection<Category> Categories { get; set; }
 		public ObservableCollection<Supplier> Suppliers { get; set; }
-		public Category SelectedCategory { get; set; }
-		public Supplier SelectedSupplier { get; set; }
-		public Action CloseAction { get; set; } // Ανάθεση αυτής της μεθόδου από το View
+        private Category _selectedCategory;
+        public Category SelectedCategory
+        {
+            get => _selectedCategory;
+            set
+            {
+                _selectedCategory = value;
+                OnPropertyChanged(nameof(SelectedCategory));
+            }
+        }
+        private Supplier _selectedSupplier;
+        public Supplier SelectedSupplier
+        {
+            get => _selectedSupplier;
+            set
+            {
+                _selectedSupplier = value;
+                OnPropertyChanged(nameof(SelectedSupplier));
+            }
+        }
+        public Action CloseAction { get; set; } // Ανάθεση αυτής της μεθόδου από το View
 
 		public ICommand SaveProductCommand { get; } // Εντολή για αποθήκευση
 
@@ -85,23 +121,8 @@ namespace HermesPOS.ViewModels
 				Suppliers.Add(supplier);
 		}
 
-		private async Task SaveProduct()
-		{
-			if (string.IsNullOrWhiteSpace(Barcode) || string.IsNullOrWhiteSpace(Name) || Price <= 0 || Stock < 0 || SelectedCategory == null || SelectedSupplier == null)
-			{
-				MessageBox.Show("Παρακαλώ συμπληρώστε όλα τα πεδία σωστά!", "Σφάλμα", MessageBoxButton.OK, MessageBoxImage.Warning);
-				return;
-			}
-
-            var normalizedBarcode = Barcode.Trim();
-
-            var existingProduct = await _unitOfWork.Products.GetByBarcodeAsync(normalizedBarcode);
-            if (existingProduct != null)
-            {
-                MessageBox.Show("Υπάρχει ήδη προϊόν με αυτό το barcode!", "Διπλό barcode", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
+        private async Task SaveProduct()
+        {
             if (!DecimalHelper.TryParseFlexibleDecimal(PriceText, out var parsedPrice))
             {
                 MessageBox.Show("Λάθος τιμή");
@@ -112,33 +133,64 @@ namespace HermesPOS.ViewModels
 
             decimal? wholesalePrice = null;
 
-            if (DecimalHelper.TryParseFlexibleDecimal(WholesalePriceText, out var parsed))
+            if (!string.IsNullOrWhiteSpace(WholesalePriceText))
             {
-                wholesalePrice = parsed;
+                if (DecimalHelper.TryParseFlexibleDecimal(WholesalePriceText, out var parsed))
+                {
+                    wholesalePrice = parsed;
+                }
             }
 
-            // Δημιουργία νέου προϊόντος με τα δεδομένα από το ViewModel
+            if (string.IsNullOrWhiteSpace(Barcode) ||
+                string.IsNullOrWhiteSpace(Name) ||
+                Price <= 0 ||
+                Stock < 0 ||
+                SelectedCategory == null ||
+                SelectedSupplier == null)
+            {
+                MessageBox.Show("Παρακαλώ συμπληρώστε όλα τα πεδία σωστά!",
+                    "Σφάλμα",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
+            var normalizedBarcode = Barcode.Trim();
+
+            var existingProduct = await _unitOfWork.Products.GetByBarcodeAsync(normalizedBarcode);
+
+            if (existingProduct != null)
+            {
+                MessageBox.Show("Υπάρχει ήδη προϊόν με αυτό το barcode!",
+                    "Διπλό barcode",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
             var newProduct = new Product
-			{
-				Barcode = Barcode,
-				Name = Name,
-				Price = Price,
-				Stock = Stock,
-				CategoryId = SelectedCategory.Id,
-				SupplierId = SelectedSupplier.Id,
-				WholesalePrice = wholesalePrice
-			};
+            {
+                Barcode = Barcode,
+                Name = Name,
+                Price = Price,
+                Stock = Stock,
+                CategoryId = SelectedCategory.Id,
+                SupplierId = SelectedSupplier.Id,
+                WholesalePrice = wholesalePrice
+            };
 
-			await _unitOfWork.Products.AddAsync(newProduct);
-			await _unitOfWork.CompleteAsync();
+            await _unitOfWork.Products.AddAsync(newProduct);
+            await _unitOfWork.CompleteAsync();
 
-			AutoClosingMessageBox.Show("Το προϊόν προστέθηκε επιτυχώς!", "Επιτυχία", 1000); //  Κλείσιμο σε 2 δευτερόλεπτα
+            AutoClosingMessageBox.Show("Το προϊόν προστέθηκε επιτυχώς!",
+                "Επιτυχία",
+                1000);
 
-			//MessageBox.Show("Το προϊόν προστέθηκε επιτυχώς!", "Επιτυχία", MessageBoxButton.OK, MessageBoxImage.Information);
-
-			CloseAction?.Invoke(); //  Κλείσιμο του παραθύρου
-		}
-		public static class AutoClosingMessageBox
+            CloseAction?.Invoke();
+        }
+        public static class AutoClosingMessageBox
 		{
 			[DllImport("user32.dll", CharSet = CharSet.Auto)]
 			private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
