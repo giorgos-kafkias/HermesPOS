@@ -14,7 +14,22 @@ namespace HermesPOS.ViewModels
 
 		public ObservableCollection<Product> LowStockProducts { get; set; } // Λίστα προϊόντων με χαμηλό απόθεμα
 
-		public ICommand ExportToExcelCommand { get; } // Εντολή για εξαγωγή σε Excel
+        private string _searchText;
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged(nameof(SearchText));
+                ApplyProductFilter();
+            }
+        }
+
+        public ObservableCollection<Product> FilteredProducts { get; set; } = new();
+
+        private List<Product> _allProducts = new();
+        public ICommand ExportToExcelCommand { get; } // Εντολή για εξαγωγή σε Excel
 
 		public LowStockProductsViewModel(IUnitOfWork unitOfWork)
 		{
@@ -45,12 +60,10 @@ namespace HermesPOS.ViewModels
 					.ThenBy(p => p.Name)
 					.ToList();
 
-				foreach (var product in sortedProducts)
-				{
-					Console.WriteLine($"📌 Προϊόν: {product.Name}, Stock: {product.Stock}");
-					LowStockProducts.Add(product);
-				}
-			});
+                _allProducts = sortedProducts;
+
+                ApplyProductFilter();
+            });
 		}
 
 		private void ExportToExcel()
@@ -72,8 +85,34 @@ namespace HermesPOS.ViewModels
 			if (LowStockProducts.Count == 0)
 				await LoadLowStockProducts();
 		}
+        private void ApplyProductFilter()
+        {
+            FilteredProducts.Clear();
 
-		public event PropertyChangedEventHandler PropertyChanged;
+            var term = (SearchText ?? "").Trim();
+
+            var filtered = string.IsNullOrWhiteSpace(term)
+                ? _allProducts
+                : _allProducts.Where(p =>
+                    (!string.IsNullOrWhiteSpace(p.Name) &&
+                     p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    ||
+                    ((p.Barcode?.ToString() ?? "")
+                        .Contains(term, StringComparison.OrdinalIgnoreCase))
+                    ||
+                    (p.Supplier?.Name?
+                        .Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
+                    ||
+                    (p.Category?.Name?
+                        .Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
+                );
+
+            foreach (var product in filtered)
+            {
+                FilteredProducts.Add(product);
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
 		protected void OnPropertyChanged(string propertyName)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
