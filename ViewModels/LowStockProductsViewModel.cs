@@ -12,8 +12,6 @@ namespace HermesPOS.ViewModels
 	{
 		private readonly IUnitOfWork _unitOfWork;
 
-		public ObservableCollection<Product> LowStockProducts { get; set; } // Λίστα προϊόντων με χαμηλό απόθεμα
-
         private string _searchText;
         public string SearchText
         {
@@ -28,13 +26,12 @@ namespace HermesPOS.ViewModels
 
         public ObservableCollection<Product> FilteredProducts { get; set; } = new();
 
-        private List<Product> _allProducts = new();
+        private List<Product> _lowStockProducts = new();
         public ICommand ExportToExcelCommand { get; } // Εντολή για εξαγωγή σε Excel
 
 		public LowStockProductsViewModel(IUnitOfWork unitOfWork)
 		{
 			_unitOfWork = unitOfWork;
-			LowStockProducts = new ObservableCollection<Product>();
 			ExportToExcelCommand = new RelayCommand(ExportToExcel);
 			_ = LoadLowStockProducts(); // ✅ Fire and forget, χωρίς warning
 		}
@@ -53,14 +50,12 @@ namespace HermesPOS.ViewModels
 			//  Εκτελούμε αλλαγές στο UI Thread
 			System.Windows.Application.Current.Dispatcher.Invoke(() =>
 			{
-				LowStockProducts.Clear();
-
 				var sortedProducts = products
 					.OrderBy(p => p.Supplier?.Name ?? "Χωρίς Προμηθευτή")
 					.ThenBy(p => p.Name)
 					.ToList();
 
-                _allProducts = sortedProducts;
+                _lowStockProducts = sortedProducts;
 
                 ApplyProductFilter();
             });
@@ -73,8 +68,8 @@ namespace HermesPOS.ViewModels
 				// Χρησιμοποιούμε fileName
 				string fileName = "LowStockProducts.xlsx";
 
-				ExcelExportHelper.ExportToExcel(LowStockProducts, fileName);
-			}
+                ExcelExportHelper.ExportToExcel(FilteredProducts, fileName);
+            }
 			catch (Exception ex)
 			{
 				Console.WriteLine($" Σφάλμα κατά την εξαγωγή: {ex.Message}");
@@ -82,8 +77,8 @@ namespace HermesPOS.ViewModels
 		}
 		public async Task OnTabSelected()
 		{
-			if (LowStockProducts.Count == 0)
-				await LoadLowStockProducts();
+            if (_lowStockProducts.Count == 0)
+                await LoadLowStockProducts();
 		}
         private void ApplyProductFilter()
         {
@@ -92,8 +87,8 @@ namespace HermesPOS.ViewModels
             var term = (SearchText ?? "").Trim();
 
             var filtered = string.IsNullOrWhiteSpace(term)
-                ? _allProducts
-                : _allProducts.Where(p =>
+				? _lowStockProducts
+               : _lowStockProducts.Where(p =>
                     (!string.IsNullOrWhiteSpace(p.Name) &&
                      p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
                     ||
