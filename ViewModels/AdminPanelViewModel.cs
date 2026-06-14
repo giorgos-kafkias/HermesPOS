@@ -98,6 +98,7 @@ namespace HermesPOS.ViewModels
 		public ICommand DeleteSupplierCommand { get; }
         public ICommand ToggleActiveCommand { get; }
         public ICommand ExportSupplierProductsCommand { get; }
+        public ICommand OpenMassPriceUpdateCommand { get; }
 
 
         public AdminPanelViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
@@ -127,6 +128,7 @@ namespace HermesPOS.ViewModels
 			ReceiveStockViewModel = serviceProvider.GetRequiredService<ReceiveStockViewModel>();
             QrReceptionViewModel = _serviceProvider.GetRequiredService<QrReceptionViewModel>();
             ExportSupplierProductsCommand = new RelayCommand( ExportSupplierProducts,() => SelectedSupplier != null);
+            OpenMassPriceUpdateCommand =  new RelayCommand(OpenMassPriceUpdate);
         }
 
 		private async Task LoadData()
@@ -343,6 +345,18 @@ namespace HermesPOS.ViewModels
 
             await LoadData();
             UpdateCommandStates();
+        }
+        private void OpenMassPriceUpdate()
+        {
+            var viewModel =
+                _serviceProvider.GetRequiredService<MassPriceUpdateViewModel>();
+
+            var window =
+                new MassPriceUpdateWindow(viewModel);
+
+            window.ShowDialog();
+
+            LoadData();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -221,6 +221,7 @@ Background="Black"
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
                         <Button Content="➕ Προσθήκη" Command="{Binding AddProductCommand}" Style="{StaticResource AddButtonStyle}" Width="150" Height="40" Margin="5"/>
                         <Button Content="✏️ Επεξεργασία" Command="{Binding EditProductCommand}" Style="{StaticResource EditButtonStyle}" Width="150" Height="40" Margin="5"/>
+                        <Button Content="💰 Μαζική Αλλαγή Τιμών" Command="{Binding OpenMassPriceUpdateCommand}" Width="150" Height="40"  Margin="5" Background="#FF9800"/>
                         <!-- Απενεργοποίηση/Ενεργοποίηση -->
                         <Button Command="{Binding ToggleActiveCommand}" Width="150" Height="40" Margin="5">
                             <Button.Style>

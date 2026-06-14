@@ -72,6 +72,7 @@ namespace HermesPOS
 					services.AddTransient<SalesReportViewModel>();
 					services.AddTransient<EditSaleViewModel>();
                     services.AddTransient<QrReceptionViewModel>();
+                    services.AddTransient<MassPriceUpdateViewModel>();
 
                     // 🔹 Προσθήκη των Views
                     services.AddScoped<MainWindow>();
@@ -84,6 +85,7 @@ namespace HermesPOS
 					services.AddScoped<EditProductWindow>();
 					services.AddScoped<EditCategoryOrSupplierView>();
 					services.AddScoped< EditSaleWindow>();
+                    services.AddScoped<MassPriceUpdateWindow>();
                     services.AddHttpClient<IStockReceptionService, StockReceptionService>();
                 });
 		}	
