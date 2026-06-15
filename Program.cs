@@ -85,7 +85,7 @@ namespace HermesPOS
 					services.AddScoped<EditProductWindow>();
 					services.AddScoped<EditCategoryOrSupplierView>();
 					services.AddScoped< EditSaleWindow>();
-                    services.AddScoped<MassPriceUpdateWindow>();
+                    services.AddScoped<MassPriceUpdateView>();
                     services.AddHttpClient<IStockReceptionService, StockReceptionService>();
                 });
 		}	

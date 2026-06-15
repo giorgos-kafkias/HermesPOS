@@ -5,7 +5,7 @@
         xmlns:views="clr-namespace:HermesPOS.Views"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Πίνακας Διαχειριστή"
-        Height="600" Width="1000"
+        Height="800" Width="1100"
         WindowStartupLocation="CenterScreen"
         Background="#E3F2FD">
 
@@ -114,9 +114,11 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Πάνω για το κουμπί -->
+            <!-- Logout -->
+            <RowDefinition Height="Auto"/>
+            <!-- Title -->
             <RowDefinition Height="*"/>
-            <!-- Κάτω για το υπόλοιπο περιεχόμενο -->
+            <!-- Tabs -->
         </Grid.RowDefinitions>
         <!-- 🔹 Κουμπί Admin πάνω δεξιά -->
         <StackPanel Grid.Row="0" 
@@ -128,7 +130,10 @@
                     Height="18"
                     Click="OpenAdminLogin_Click"/>
         </StackPanel>
-        <TabControl   Grid.Row="1" SelectionChanged="TabControl_SelectionChanged">
+        <TextBlock Text="Hermes POS System"
+           Style="{StaticResource TitleText}"
+           Grid.Row="1"/>
+        <TabControl   Grid.Row="2" SelectionChanged="TabControl_SelectionChanged">
             <!-- 🔹 Καρτέλα Διαχείρισης Προϊόντων -->
             <TabItem Header="📦 Προϊόντα">
                 <Grid>
@@ -221,7 +226,7 @@ Background="Black"
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10" Grid.Row="2">
                         <Button Content="➕ Προσθήκη" Command="{Binding AddProductCommand}" Style="{StaticResource AddButtonStyle}" Width="150" Height="40" Margin="5"/>
                         <Button Content="✏️ Επεξεργασία" Command="{Binding EditProductCommand}" Style="{StaticResource EditButtonStyle}" Width="150" Height="40" Margin="5"/>
-                        <Button Content="💰 Μαζική Αλλαγή Τιμών" Command="{Binding OpenMassPriceUpdateCommand}" Width="150" Height="40"  Margin="5" Background="#FF9800"/>
+                        
                         <!-- Απενεργοποίηση/Ενεργοποίηση -->
                         <Button Command="{Binding ToggleActiveCommand}" Width="150" Height="40" Margin="5">
                             <Button.Style>
@@ -490,6 +495,9 @@ Background="Black"
             </TabItem>
             <TabItem Header="📄 Παραλαβή από QR">
                 <views:QrReceptionView DataContext="{Binding QrReceptionViewModel}" Loaded="QrReceptionView_Loaded" />
+            </TabItem>
+            <TabItem Header="⚙️ Μαζική Αλλαγή Τιμών">
+                <views:MassPriceUpdateView DataContext="{Binding MassPriceUpdateViewModel}"/>
             </TabItem>
 
 

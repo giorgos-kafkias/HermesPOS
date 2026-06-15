@@ -31,7 +31,7 @@ namespace HermesPOS.ViewModels
 
             ApplyCommand = new RelayCommand(async () => await ApplyAsync());
 
-            _ = LoadAsync();
+            //_ = LoadAsync();
         }
 
         // ---------------- SELECTIONS ----------------

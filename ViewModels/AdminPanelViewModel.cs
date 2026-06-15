@@ -26,8 +26,8 @@ namespace HermesPOS.ViewModels
 		public SalesReportViewModel SalesReportViewModel { get; }
 		public ReceiveStockViewModel ReceiveStockViewModel { get; }
 		public LowStockProductsViewModel LowStockViewModel { get; }
-
         public QrReceptionViewModel QrReceptionViewModel { get; }
+		public MassPriceUpdateViewModel MassPriceUpdateViewModel { get; }
 
 
 
@@ -98,7 +98,6 @@ namespace HermesPOS.ViewModels
 		public ICommand DeleteSupplierCommand { get; }
         public ICommand ToggleActiveCommand { get; }
         public ICommand ExportSupplierProductsCommand { get; }
-        public ICommand OpenMassPriceUpdateCommand { get; }
 
 
         public AdminPanelViewModel(IUnitOfWork unitOfWork, IServiceProvider serviceProvider)
@@ -106,10 +105,10 @@ namespace HermesPOS.ViewModels
 			_unitOfWork = unitOfWork;
 			_serviceProvider = serviceProvider;
 
-			LoadData();
+            _ = LoadData();
 
-			// 🔹 Δημιουργία των Commands
-			AddProductCommand = new RelayCommand(AddProduct);
+            // 🔹 Δημιουργία των Commands
+            AddProductCommand = new RelayCommand(AddProduct);
 			EditProductCommand = new RelayCommand(EditProduct, () => SelectedProduct != null);
 			DeleteProductCommand = new RelayCommand(DeleteProduct, () => SelectedProduct != null);
             ToggleActiveCommand = new RelayCommand(ToggleActive, () => SelectedProduct != null);
@@ -128,7 +127,7 @@ namespace HermesPOS.ViewModels
 			ReceiveStockViewModel = serviceProvider.GetRequiredService<ReceiveStockViewModel>();
             QrReceptionViewModel = _serviceProvider.GetRequiredService<QrReceptionViewModel>();
             ExportSupplierProductsCommand = new RelayCommand( ExportSupplierProducts,() => SelectedSupplier != null);
-            OpenMassPriceUpdateCommand =  new RelayCommand(OpenMassPriceUpdate);
+            MassPriceUpdateViewModel = _serviceProvider.GetRequiredService<MassPriceUpdateViewModel>();
         }
 
 		private async Task LoadData()
@@ -346,18 +345,7 @@ namespace HermesPOS.ViewModels
             await LoadData();
             UpdateCommandStates();
         }
-        private void OpenMassPriceUpdate()
-        {
-            var viewModel =
-                _serviceProvider.GetRequiredService<MassPriceUpdateViewModel>();
 
-            var window =
-                new MassPriceUpdateWindow(viewModel);
-
-            window.ShowDialog();
-
-            LoadData();
-        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 		protected void OnPropertyChanged(string propertyName)

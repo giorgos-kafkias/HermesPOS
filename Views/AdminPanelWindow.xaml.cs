@@ -89,6 +89,10 @@ namespace HermesPOS.Views
                     // 👉 εδώ φορτώνουμε τους suppliers ΜΟΝΟ όταν ανοιχτεί η καρτέλα QR
                     await vm.QrReceptionViewModel.EnsureSuppliersLoadedAsync();
                 }
+                else if (header.Contains("Μαζική"))
+                {
+                    await vm.MassPriceUpdateViewModel.LoadAsync();
+                }
             }
         }
 
