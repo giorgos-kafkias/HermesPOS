@@ -155,6 +155,9 @@ namespace HermesPOS.ViewModels
 
                     SupplierId = existing.SupplierId;
 
+                    // Ανανέωση προτάσεων για το υπάρχον draft
+                    await RefreshSuggestionsAsync();
+
                     MessageBox.Show($"Φορτώθηκε το υπάρχον draft #{existing.Id}\n(MARK: {existing.Mark})",
                         "Επαναφόρτωση", MessageBoxButton.OK, MessageBoxImage.Information);
 
