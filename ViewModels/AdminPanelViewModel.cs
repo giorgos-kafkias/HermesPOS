@@ -308,21 +308,25 @@ namespace HermesPOS.ViewModels
         {
             FilteredProducts.Clear();
 
-            var term = (SearchText ?? "").Trim();
+            var terms = (SearchText ?? "")
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-            var filtered = string.IsNullOrWhiteSpace(term)
+            var filtered = terms.Length == 0
                 ? Products
                 : Products.Where(p =>
-                    (!string.IsNullOrWhiteSpace(p.Name) &&
-                     p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-                    ||
-                    // ✅ Barcode search (δουλεύει είτε Barcode είναι string είτε numeric)
-                    ((p.Barcode?.ToString() ?? "").Contains(term, StringComparison.OrdinalIgnoreCase))
-                    ||
-                    (p.Category?.Name?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                    ||
-                    (p.Supplier?.Name?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                );
+                {
+                    var searchableText = string.Join(" ",
+                        p.Name ?? "",
+                        p.Barcode?.ToString() ?? "",
+                        p.Category?.Name ?? "",
+                        p.Supplier?.Name ?? ""
+                    );
+
+                    return terms.All(term =>
+                        searchableText.Contains(
+                            term,
+                            StringComparison.OrdinalIgnoreCase));
+                });
 
             foreach (var product in filtered)
                 FilteredProducts.Add(product);
