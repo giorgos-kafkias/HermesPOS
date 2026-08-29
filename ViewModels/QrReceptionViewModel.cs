@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using HermesPOS.Views;
 
 namespace HermesPOS.ViewModels
 {
@@ -73,6 +74,7 @@ namespace HermesPOS.ViewModels
         public ICommand ApplySuggestionCommand { get; }
         public ICommand ClearQrCommand { get; }
         public ICommand DeleteDraftCommand { get; }
+        public ICommand CreateProductCommand { get; }
 
 
         public QrReceptionViewModel(IUnitOfWork unitOfWork, IStockReceptionService receptionService)
@@ -87,6 +89,7 @@ namespace HermesPOS.ViewModels
             ApplySuggestionCommand = new RelayCommand<Proposal>(ApplySuggestion);
             ClearQrCommand = new RelayCommand(ClearQr);
             DeleteDraftCommand = new RelayCommand(DeleteDraft);
+            CreateProductCommand = new RelayCommand<StockReceptionItem>(CreateProduct);
 
             _ = LoadSuppliersAsync();
         }
@@ -157,6 +160,7 @@ namespace HermesPOS.ViewModels
 
                     // Ανανέωση προτάσεων για το υπάρχον draft
                     await RefreshSuggestionsAsync();
+                    await RefreshProductStatusesAsync();
 
                     MessageBox.Show($"Φορτώθηκε το υπάρχον draft #{existing.Id}\n(MARK: {existing.Mark})",
                         "Επαναφόρτωση", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -181,6 +185,7 @@ namespace HermesPOS.ViewModels
                 await _receptionService.AutoMapBarcodesAsync(SupplierId, Items);
 
             await RefreshSuggestionsAsync();
+            await RefreshProductStatusesAsync();
 
             if (!string.IsNullOrEmpty(message))
                 MessageBox.Show(message, "Εισαγωγή", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -364,7 +369,27 @@ namespace HermesPOS.ViewModels
             QrUrl = string.Empty;
             OnPropertyChanged(nameof(QrUrl));
         }
+        private async Task RefreshProductStatusesAsync()
+        {
+            foreach (var item in Items)
+            {
+                await RefreshProductStatusAsync(item);
+            }
+        }
+        public async Task RefreshProductStatusAsync(StockReceptionItem item)
+        {
+            if (item == null)
+                return;
 
+            if (string.IsNullOrWhiteSpace(item.Barcode))
+            {
+                item.ProductExists = false;
+                return;
+            }
+
+            item.ProductExists = await _receptionService
+                .ProductExistsByBarcodeAsync(item.Barcode.Trim());
+        }
         // -------- ΝΕΑ: helpers για προτάσεις --------
 
         private async Task RefreshAfterSupplierChangeAsync()
@@ -463,7 +488,80 @@ namespace HermesPOS.ViewModels
                     MessageBoxImage.Error);
             }
         }
+        
+        private async void CreateProduct(StockReceptionItem? item)
+        {
+            if (item == null)
+                return;
 
+            if (string.IsNullOrWhiteSpace(item.Barcode))
+            {
+                MessageBox.Show(
+                    "Συμπλήρωσε πρώτα το barcode.",
+                    "Νέο προϊόν",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                return;
+            }
+
+            var barcode = item.Barcode.Trim();
+
+            var exists = await _receptionService
+                .ProductExistsByBarcodeAsync(barcode);
+
+            if (exists)
+            {
+                MessageBox.Show(
+                    "Το barcode υπάρχει ήδη στην αποθήκη.",
+                    "Υπάρχον προϊόν",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            var vm = new AddProductViewModel(
+                _unitOfWork,
+                scannedBarcode: barcode,
+                productName: item.Description,
+                supplierId: SupplierId,
+                initialStock: 0
+            );
+
+            var window = new AddProductView(vm);
+
+            window.ShowDialog();
+
+            // Μετά το κλείσιμο της φόρμας,
+            // έλεγξε αν το προϊόν δημιουργήθηκε πραγματικά.
+            var created = await _receptionService
+                .ProductExistsByBarcodeAsync(barcode);
+
+            if (created)
+            {
+                await RefreshProductStatusAsync(item);
+
+                MessageBox.Show(
+                    "Το νέο προϊόν δημιουργήθηκε και η γραμμή είναι έτοιμη για Post.",
+                    "Νέο προϊόν",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                await RefreshSuggestionsAsync();
+
+                ((RelayCommand)SaveMappingsCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)PostReceptionCommand).RaiseCanExecuteChanged();
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Το προϊόν δεν δημιουργήθηκε.",
+                    "Νέο προϊόν",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
         public event PropertyChangedEventHandler? PropertyChanged;
         private void OnPropertyChanged(string name) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

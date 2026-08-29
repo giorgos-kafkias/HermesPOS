@@ -18,5 +18,6 @@ namespace HermesPOS.Services
         // PASS 2: προτάσεις (όχι auto-fill) βάσει SupplierId + normalized ονόματος
         Task<List<(StockReceptionItem item, string barcode, string productName)>>
             SuggestBarcodesAsync(int supplierId, IEnumerable<StockReceptionItem> items);
+        Task<bool> ProductExistsByBarcodeAsync(string barcode);
     }
 }

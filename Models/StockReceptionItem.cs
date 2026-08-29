@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HermesPOS.Models
 {
@@ -36,7 +37,46 @@ namespace HermesPOS.Models
         public string? Barcode
         {
             get => _barcode;
-            set { if (_barcode != value) { _barcode = value; OnPropertyChanged(); } }
+            set
+            {
+                if (_barcode != value)
+                {
+                    _barcode = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ProductStatus));
+                }
+            }
+        }
+
+        private bool _productExists;
+
+        [NotMapped]
+        public bool ProductExists
+        {
+            get => _productExists;
+            set
+            {
+                if (_productExists != value)
+                {
+                    _productExists = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ProductStatus));
+                }
+            }
+        }
+
+        [NotMapped]
+        public string ProductStatus
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(Barcode))
+                    return "— Χωρίς barcode";
+
+                return ProductExists
+                    ? "✅ Υπάρχει"
+                    : "⚠ Νέο προϊόν";
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

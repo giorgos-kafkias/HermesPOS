@@ -32,6 +32,16 @@ namespace HermesPOS.Services
             _uow = uow;
         }
 
+        public async Task<bool> ProductExistsByBarcodeAsync(string barcode)
+        {
+            if (string.IsNullOrWhiteSpace(barcode))
+                return false;
+
+            var normalizedBarcode = barcode.Trim();
+
+            return await _db.Products
+                .AnyAsync(p => p.Barcode == normalizedBarcode);
+        }
         public async Task<(bool ok, string message)> PostReceptionAsync(int receptionId)
         {
             var rec = await _db.StockReceptions

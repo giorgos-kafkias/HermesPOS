@@ -96,30 +96,44 @@ namespace HermesPOS.ViewModels
 
 		public ICommand SaveProductCommand { get; } // Εντολή για αποθήκευση
 
-		public AddProductViewModel(IUnitOfWork unitOfWork, string scannedBarcode = null)
-		{
-			_unitOfWork = unitOfWork;
-			Barcode = scannedBarcode ?? ""; // Αν υπάρχει barcode από σκανάρισμα, το περνάει αυτόματα
-			Categories = new ObservableCollection<Category>();
-			Suppliers = new ObservableCollection<Supplier>();
-			LoadCategoriesAndSuppliers();
-			SaveProductCommand = new AsyncRelayCommand(SaveProduct);
-		}
+        public AddProductViewModel(IUnitOfWork unitOfWork, string scannedBarcode = null, string productName = null, int? supplierId = null, int initialStock = 0)
+        {
+            _unitOfWork = unitOfWork;
 
-		private async void LoadCategoriesAndSuppliers()
-		{
-			var categories = await _unitOfWork.Categories.GetAllAsync();
-			var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
+            Barcode = scannedBarcode ?? "";
+            Name = productName ?? "";
+            Stock = initialStock;
 
-			Categories.Clear();
-			Suppliers.Clear();
+            Categories = new ObservableCollection<Category>();
+            Suppliers = new ObservableCollection<Supplier>();
 
-			foreach (var category in categories)
-				Categories.Add(category);
+            LoadCategoriesAndSuppliers(supplierId);
 
-			foreach (var supplier in suppliers)
-				Suppliers.Add(supplier);
-		}
+            SaveProductCommand = new AsyncRelayCommand(SaveProduct);
+        }
+
+        private async void LoadCategoriesAndSuppliers(int? supplierId = null)
+        {
+            var categories = await _unitOfWork.Categories.GetAllAsync();
+            var suppliers = await _unitOfWork.Suppliers.GetAllAsync();
+
+            Categories.Clear();
+            Suppliers.Clear();
+
+            foreach (var category in categories)
+                Categories.Add(category);
+
+            foreach (var supplier in suppliers)
+                Suppliers.Add(supplier);
+
+            // Αν ανοίξαμε τη φόρμα από παραλαβή,
+            // επίλεξε αυτόματα τον σωστό προμηθευτή.
+            if (supplierId.HasValue)
+            {
+                SelectedSupplier = Suppliers
+                    .FirstOrDefault(s => s.Id == supplierId.Value);
+            }
+        }
 
         private async Task SaveProduct()
         {

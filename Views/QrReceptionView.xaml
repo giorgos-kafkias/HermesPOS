@@ -260,7 +260,9 @@
           HeadersVisibility="Column"
           RowHeaderWidth="0"
           ColumnWidth="SizeToCells"
-          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+          ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+          SelectionChanged="DataGrid_SelectionChanged"
+          CellEditEnding="DataGrid_CellEditEnding">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="SupplierCode"
                             Binding="{Binding SupplierCode}"
@@ -284,16 +286,49 @@
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="Barcode Προϊόντος"
-                            Binding="{Binding Barcode}"
-                            Width="180"/>
+                    Binding="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
+                                Width="180"/>
+                <DataGridTextColumn Header="Κατάσταση"
+                    Binding="{Binding ProductStatus}"
+                    IsReadOnly="True"
+                    Width="130"/>
 
-                <DataGridTemplateColumn Header="" Width="200">
+                <DataGridTemplateColumn Header="Ενέργειες" Width="220">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="Διαγραφή"
-                            Padding="6,2"
-                            Command="{Binding DataContext.RemoveLineCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                            CommandParameter="{Binding}" />
+                            <StackPanel Orientation="Horizontal">
+
+                                <Button Content="Νέο προϊόν"
+                                        Padding="6,2"
+                                        Margin="0,0,6,0"
+                                        Command="{Binding DataContext.CreateProductCommand,
+                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}">
+
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Visibility" Value="Visible"/>
+
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ProductExists}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Barcode}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+
+                                </Button>
+
+                                <Button Content="Διαγραφή"
+                                        Padding="6,2"
+                                        Command="{Binding DataContext.RemoveLineCommand,
+                                          RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}" />
+
+                            </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
