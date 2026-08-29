@@ -71,6 +71,7 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
+        
         <!-- 🟢 Προσθήκη -->
         <Style x:Key="AddButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="#4CAF50"/>
@@ -134,6 +135,63 @@
            Style="{StaticResource TitleText}"
            Grid.Row="1"/>
         <TabControl   Grid.Row="2" SelectionChanged="TabControl_SelectionChanged">
+            <TabControl.Resources>
+
+                <Style TargetType="TabItem">
+
+                    <Setter Property="Foreground" Value="Black"/>
+                    <Setter Property="Background" Value="#F2F2F2"/>
+                    <Setter Property="Padding" Value="12,6"/>
+
+                    <Setter Property="Template">
+                        <Setter.Value>
+
+                            <ControlTemplate TargetType="TabItem">
+
+                                <Border x:Name="TabBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="#BDBDBD"
+                            BorderThickness="1"
+                            Padding="{TemplateBinding Padding}">
+
+                                    <ContentPresenter x:Name="TabContent"
+                                          ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+
+                                </Border>
+
+                                <ControlTemplate.Triggers>
+
+                                    <Trigger Property="IsSelected" Value="True">
+
+                                        <Setter TargetName="TabBorder"
+                                    Property="Background"
+                                    Value="#1976D2"/>
+
+                                        <Setter Property="Foreground"
+                                    Value="White"/>
+
+                                    </Trigger>
+
+                                    <Trigger Property="IsMouseOver" Value="True">
+
+                                        <Setter TargetName="TabBorder"
+                                    Property="Background"
+                                    Value="#1565C0"/>
+
+                                    </Trigger>
+
+                                </ControlTemplate.Triggers>
+
+                            </ControlTemplate>
+
+                        </Setter.Value>
+                    </Setter>
+
+                </Style>
+
+            </TabControl.Resources>
             <!-- 🔹 Καρτέλα Διαχείρισης Προϊόντων -->
             <TabItem Header="📦 Προϊόντα">
                 <Grid>

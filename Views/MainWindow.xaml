@@ -86,7 +86,7 @@
         <Style x:Key="TotalText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="30"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#0D47A1"/>
+            <Setter Property="Foreground" Value="Black"/>
         </Style>
     </Window.Resources>
 
@@ -148,11 +148,12 @@
 
         <!-- List of Products -->
         <Border Grid.Row="3" Background="White" CornerRadius="10" Padding="10" BorderBrush="#BBDEFB" BorderThickness="1">
-            <ListView ItemsSource="{Binding CartItems}" ItemContainerStyle="{StaticResource ProductRowStyle}">
+            <ListView x:Name="CartListView" ItemsSource="{Binding CartItems}" ItemContainerStyle="{StaticResource ProductRowStyle}"
+          SizeChanged="CartListView_SizeChanged">
                 <ListView.View>
                     <GridView>
                         <!-- Όνομα προϊόντος (CellTemplate για έλεγχο μεγέθους γραμματοσειράς) -->
-                        <GridViewColumn Header="Όνομα Προϊόντος" Width="280">
+                        <GridViewColumn x:Name="ProductNameColumn" Header="Όνομα Προϊόντος" Width="280">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Product.Name}"
@@ -164,7 +165,7 @@
                         </GridViewColumn>
 
                         <!-- Editable Τιμή -->
-                        <GridViewColumn Header="Τιμή (€)" Width="110">
+                        <GridViewColumn x:Name="PriceColumn" Header="Τιμή (€)" Width="110">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBox Text="{Binding PriceString, UpdateSourceTrigger=PropertyChanged}"
@@ -177,7 +178,7 @@
                         </GridViewColumn>
 
                         <!-- Χονδρική Τιμή -->
-                        <GridViewColumn Header="Χονδρική" Width="160">
+                        <GridViewColumn x:Name="WholesaleColumn" Header="Χονδρική" Width="160">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -196,7 +197,9 @@
                         </GridViewColumn>
 
                         <!-- Ποσότητα -->
-                        <GridViewColumn Header="Ποσότητα" Width="170">
+                        <GridViewColumn x:Name="QuantityColumn"
+                Header="Ποσότητα"
+                Width="170">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid Width="160" HorizontalAlignment="Center">
@@ -241,7 +244,9 @@
                         </GridViewColumn>
 
                         <!-- Σύνολο -->
-                        <GridViewColumn Header="Σύνολο (€)" Width="140">
+                        <GridViewColumn x:Name="TotalColumn"
+                Header="Σύνολο (€)"
+                Width="140">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid HorizontalAlignment="Stretch">
@@ -257,7 +262,9 @@
                         </GridViewColumn>
 
                         <!-- Διαγραφή -->
-                        <GridViewColumn Header="Διαγραφή" Width="90">
+                        <GridViewColumn x:Name="DeleteColumn"
+                Header="Διαγραφή"
+                Width="90">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Button Content="❌" Background="#C62828" Width="34" Height="34"
@@ -294,7 +301,7 @@
         <!-- Footer -->
         <DockPanel Grid.Row="4" Margin="0,12">
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                <TextBlock Text="Σύνολο: " FontSize="22" Margin="10,0"/>
+                <TextBlock Text="Σύνολο: " FontSize="22" Margin="10,0" TextDecorations="Underline"/>
                 <!-- ΠΟΛΥ ΜΕΓΑΛΟ τελικό ποσό -->
                 <TextBlock Text="{Binding TotalPrice, StringFormat={}{0:N2} €}" Style="{StaticResource TotalText}"/>
             </StackPanel>

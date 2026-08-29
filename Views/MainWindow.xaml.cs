@@ -42,5 +42,25 @@ namespace HermesPOS.Views
 
             e.Handled = true; // μην περάσει πιο κάτω το Enter
         }
+
+        private void CartListView_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            double fixedColumnsWidth =
+                PriceColumn.Width +
+                WholesaleColumn.Width +
+                QuantityColumn.Width +
+                TotalColumn.Width +
+                DeleteColumn.Width;
+
+            double extraSpace = 35;
+
+            double availableWidth =
+                CartListView.ActualWidth
+                - fixedColumnsWidth
+                - extraSpace;
+
+            if (availableWidth > 200)
+                ProductNameColumn.Width = availableWidth;
+        }
     }
 }
