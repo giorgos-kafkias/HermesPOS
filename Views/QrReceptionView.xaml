@@ -6,7 +6,93 @@
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="800">
     <UserControl.Resources>
+
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Νέο προϊόν -->
+        <Style x:Key="NewProductButtonStyle" TargetType="Button">
+
+            <Setter Property="Background" Value="#43A047"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+
+                        <Border Background="{TemplateBinding Background}"
+                        CornerRadius="4"
+                        Padding="{TemplateBinding Padding}">
+
+                            <ContentPresenter
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
+
+                        </Border>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2E7D32"/>
+                </Trigger>
+
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#1B5E20"/>
+                </Trigger>
+
+            </Style.Triggers>
+
+        </Style>
+
+        <!-- Διαγραφή -->
+        <Style x:Key="ReceptionDeleteButtonStyle" TargetType="Button">
+
+            <Setter Property="Background" Value="#D32F2F"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+
+                        <Border Background="{TemplateBinding Background}"
+                        CornerRadius="4"
+                        Padding="{TemplateBinding Padding}">
+
+                            <ContentPresenter
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
+
+                        </Border>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+            <Style.Triggers>
+
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#B71C1C"/>
+                </Trigger>
+
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#7F0000"/>
+                </Trigger>
+
+            </Style.Triggers>
+
+        </Style>
+
     </UserControl.Resources>
 
     <DockPanel LastChildFill="True" Margin="10" >
@@ -274,61 +360,70 @@
                 <DataGridTemplateColumn Header="Ποσότητα" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Quantity}"/>
+                            <TextBlock Text="{Binding Quantity}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                     <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
                             <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
-                             VerticalContentAlignment="Center"/>
+                                     HorizontalContentAlignment="Center"
+                                     VerticalContentAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
 
                 <DataGridTextColumn Header="Barcode Προϊόντος"
-                    Binding="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
-                                Width="180"/>
+                                    Binding="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
+                                    Width="180"/>
                 <DataGridTextColumn Header="Κατάσταση"
-                    Binding="{Binding ProductStatus}"
-                    IsReadOnly="True"
-                    Width="130"/>
+                                    Binding="{Binding ProductStatus}"
+                                    IsReadOnly="True"
+                                    Width="130"/>
 
                 <DataGridTemplateColumn Header="Ενέργειες" Width="220">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                                <Button Content="Νέο προϊόν"
-                                        Padding="6,2"
-                                        Margin="0,0,6,0"
+                                <Button Grid.Column="0"
+                                        Content="➕ Νέο προϊόν"
+                                        HorizontalAlignment="Left"
                                         Command="{Binding DataContext.CreateProductCommand,
-                                                    RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                  RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}">
 
                                     <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Visibility" Value="Visible"/>
+                                        <Style TargetType="Button"
+                                               BasedOn="{StaticResource NewProductButtonStyle}">
 
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ProductExists}" Value="True">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
+
                                                 <DataTrigger Binding="{Binding Barcode}" Value="">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
+
                                         </Style>
                                     </Button.Style>
-
                                 </Button>
 
-                                <Button Content="Διαγραφή"
-                                        Padding="6,2"
+                                <Button Grid.Column="1"
+                                        Content="Διαγραφή 🗑️"
+                                        HorizontalAlignment="Right"
+                                        Style="{StaticResource ReceptionDeleteButtonStyle}"
                                         Command="{Binding DataContext.RemoveLineCommand,
-                                          RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                  RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}" />
-
-                            </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
